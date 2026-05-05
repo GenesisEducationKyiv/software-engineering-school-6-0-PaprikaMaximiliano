@@ -1,8 +1,5 @@
 import { prisma } from "../lib/prisma.js";
-import {
-  GitHubRateLimitError,
-  type GitHubClient,
-} from "../integrations/githubClient.js";
+import { GitHubRateLimitError, type GitHubClient } from "../integrations/githubClient.js";
 import type { Mailer } from "../integrations/mailer.js";
 
 type Logger = {
@@ -67,9 +64,7 @@ export class ReleaseScanner {
 
     for (const repo of repositories) {
       try {
-        const latestTag = await this.githubClient.getLatestReleaseTag(
-          repo.fullName,
-        );
+        const latestTag = await this.githubClient.getLatestReleaseTag(repo.fullName);
 
         if (!latestTag) {
           continue;
@@ -123,10 +118,7 @@ export class ReleaseScanner {
           return;
         }
 
-        this.logger.error(
-          { repository: repo.fullName, error },
-          "failed to scan repository",
-        );
+        this.logger.error({ repository: repo.fullName, error }, "failed to scan repository");
       }
     }
   }

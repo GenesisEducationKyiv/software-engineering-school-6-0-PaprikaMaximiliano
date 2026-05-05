@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  extractProvidedApiKey,
-  isAuthorizedApiKey,
-} from "../src/utils/apiKey.js";
+import { extractProvidedApiKey, isAuthorizedApiKey } from "../src/utils/apiKey.js";
 
 describe("extractProvidedApiKey", () => {
   it("reads token from x-api-key header", () => {
@@ -33,10 +30,7 @@ describe("isAuthorizedApiKey", () => {
   });
 
   it("returns false when token does not match", () => {
-    const result = isAuthorizedApiKey(
-      { authorization: "Bearer wrong-token" },
-      "my-token",
-    );
+    const result = isAuthorizedApiKey({ authorization: "Bearer wrong-token" }, "my-token");
 
     expect(result).toBe(false);
   });

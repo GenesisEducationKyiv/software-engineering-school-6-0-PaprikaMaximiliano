@@ -1,13 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
-const { mockCreate, mockFindUnique, mockFindMany, mockUpdate, mockDeleteMany } =
-  vi.hoisted(() => ({
-    mockCreate: vi.fn(),
-    mockFindUnique: vi.fn(),
-    mockFindMany: vi.fn(),
-    mockUpdate: vi.fn(),
-    mockDeleteMany: vi.fn(),
-  }));
+const { mockCreate, mockFindUnique, mockFindMany, mockUpdate, mockDeleteMany } = vi.hoisted(() => ({
+  mockCreate: vi.fn(),
+  mockFindUnique: vi.fn(),
+  mockFindMany: vi.fn(),
+  mockUpdate: vi.fn(),
+  mockDeleteMany: vi.fn(),
+}));
 
 vi.mock("../src/lib/prisma.js", () => ({
   prisma: {
@@ -56,17 +54,11 @@ const makeMailer = (): Mailer => {
 const makeService = () => {
   const github = makeGithubClient();
   const mailer = makeMailer();
-  const service = new SubscriptionService(
-    github,
-    mailer,
-    "https://example.com",
-  );
+  const service = new SubscriptionService(github, mailer, "https://example.com");
   return { service, github, mailer };
 };
 
-const makeSubscription = (
-  overrides: Partial<Subscription> = {},
-): Subscription => ({
+const makeSubscription = (overrides: Partial<Subscription> = {}): Subscription => ({
   id: "sub-1",
   email: "user@example.com",
   confirmationToken: "confirm-token",
@@ -113,24 +105,22 @@ describe("SubscriptionService.subscribe()", () => {
   it("throws ValidationError for an invalid email", async () => {
     const { service } = makeService();
 
-    await expect(
-      service.subscribe({ email: "not-an-email", repo: "owner/repo" }),
-    ).rejects.toThrow(ValidationError);
+    await expect(service.subscribe({ email: "not-an-email", repo: "owner/repo" })).rejects.toThrow(
+      ValidationError,
+    );
   });
 
   it("throws ValidationError for an invalid repo format", async () => {
     const { service } = makeService();
 
-    await expect(
-      service.subscribe({ email: "user@example.com", repo: "badrepo" }),
-    ).rejects.toThrow(ValidationError);
+    await expect(service.subscribe({ email: "user@example.com", repo: "badrepo" })).rejects.toThrow(
+      ValidationError,
+    );
   });
 
   it("throws ResourceNotFoundError when the GitHub repo does not exist", async () => {
     const { service, github } = makeService();
-    vi.spyOn(github, "getLatestReleaseTag").mockRejectedValue(
-      new GitHubNotFoundError("not found"),
-    );
+    vi.spyOn(github, "getLatestReleaseTag").mockRejectedValue(new GitHubNotFoundError("not found"));
 
     await expect(
       service.subscribe({ email: "user@example.com", repo: "owner/repo" }),
@@ -192,9 +182,7 @@ describe("SubscriptionService.subscribe()", () => {
         };
       };
     };
-    expect(createCall.data.repository.connectOrCreate?.create.lastSeenTag).toBe(
-      "v9.9.9",
-    );
+    expect(createCall.data.repository.connectOrCreate?.create.lastSeenTag).toBe("v9.9.9");
   });
 });
 
@@ -205,9 +193,7 @@ describe("SubscriptionService.confirm()", () => {
     mockFindUnique.mockResolvedValue(null);
     const { service } = makeService();
 
-    await expect(service.confirm("bad-token")).rejects.toThrow(
-      ResourceNotFoundError,
-    );
+    await expect(service.confirm("bad-token")).rejects.toThrow(ResourceNotFoundError);
   });
 
   it("updates the subscription to confirmed when it is not yet confirmed", async () => {
@@ -215,9 +201,7 @@ describe("SubscriptionService.confirm()", () => {
     vi.setSystemTime(now);
 
     mockFindUnique.mockResolvedValue(makeSubscription({ confirmed: false }));
-    mockUpdate.mockResolvedValue(
-      makeSubscription({ confirmed: true, confirmedAt: now }),
-    );
+    mockUpdate.mockResolvedValue(makeSubscription({ confirmed: true, confirmedAt: now }));
     const { service } = makeService();
 
     await service.confirm("valid-token");
@@ -245,9 +229,7 @@ describe("SubscriptionService.unsubscribe()", () => {
     mockDeleteMany.mockResolvedValue({ count: 0 });
     const { service } = makeService();
 
-    await expect(service.unsubscribe("ghost-token")).rejects.toThrow(
-      ResourceNotFoundError,
-    );
+    await expect(service.unsubscribe("ghost-token")).rejects.toThrow(ResourceNotFoundError);
   });
 
   it("deletes the matching subscription on a valid token", async () => {
@@ -267,9 +249,7 @@ describe("SubscriptionService.listByEmail()", () => {
   it("throws ValidationError for an invalid email", async () => {
     const { service } = makeService();
 
-    await expect(service.listByEmail("not-valid")).rejects.toThrow(
-      ValidationError,
-    );
+    await expect(service.listByEmail("not-valid")).rejects.toThrow(ValidationError);
   });
 
   it("maps Prisma rows to the SubscriptionResponse shape correctly", async () => {

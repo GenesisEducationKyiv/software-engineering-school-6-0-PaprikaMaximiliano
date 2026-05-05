@@ -8,10 +8,7 @@ import {
 import { isValidToken } from "../utils/validation.js";
 import { GitHubRateLimitError } from "../integrations/githubClient.js";
 
-export function subscriptionRoutes(
-  app: FastifyInstance,
-  service: SubscriptionService,
-): void {
+export function subscriptionRoutes(app: FastifyInstance, service: SubscriptionService): void {
   app.post("/subscribe", async (request, reply) => {
     const body = request.body as { email?: string; repo?: string } | undefined;
     const email = body?.email?.trim() ?? "";
@@ -19,22 +16,16 @@ export function subscriptionRoutes(
 
     try {
       await service.subscribe({ email, repo });
-      return reply
-        .code(200)
-        .send({ message: "Subscription successful. Confirmation email sent." });
+      return reply.code(200).send({ message: "Subscription successful. Confirmation email sent." });
     } catch (error) {
       if (error instanceof ValidationError) {
         return reply.code(400).send({ message: "Invalid input" });
       }
       if (error instanceof ResourceNotFoundError) {
-        return reply
-          .code(404)
-          .send({ message: "Repository not found on GitHub" });
+        return reply.code(404).send({ message: "Repository not found on GitHub" });
       }
       if (error instanceof SubscriptionConflictError) {
-        return reply
-          .code(409)
-          .send({ message: "Email already subscribed to this repository" });
+        return reply.code(409).send({ message: "Email already subscribed to this repository" });
       }
       if (error instanceof GitHubRateLimitError) {
         return reply.code(503).send({
@@ -54,9 +45,7 @@ export function subscriptionRoutes(
 
     try {
       await service.confirm(token);
-      return reply
-        .code(200)
-        .send({ message: "Subscription confirmed successfully" });
+      return reply.code(200).send({ message: "Subscription confirmed successfully" });
     } catch (error) {
       if (error instanceof ResourceNotFoundError) {
         return reply.code(404).send({ message: "Token not found" });

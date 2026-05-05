@@ -1,12 +1,7 @@
 import Fastify from "fastify";
 import formbody from "@fastify/formbody";
 import sensible from "@fastify/sensible";
-import {
-  Counter,
-  Histogram,
-  Registry,
-  collectDefaultMetrics,
-} from "prom-client";
+import { Counter, Histogram, Registry, collectDefaultMetrics } from "prom-client";
 import { env } from "./config.js";
 import { GitHubClient } from "./integrations/githubClient.js";
 import { Mailer } from "./integrations/mailer.js";
@@ -51,8 +46,7 @@ export async function buildApp() {
       return;
     }
 
-    const elapsedSeconds =
-      Number(process.hrtime.bigint() - start) / 1_000_000_000;
+    const elapsedSeconds = Number(process.hrtime.bigint() - start) / 1_000_000_000;
     const route = request.routeOptions.url ?? "unknown";
     const labels = {
       method: request.method,
@@ -78,11 +72,7 @@ export async function buildApp() {
     pass: env.SMTP_PASS,
   });
 
-  const subscriptionService = new SubscriptionService(
-    githubClient,
-    mailer,
-    env.APP_BASE_URL,
-  );
+  const subscriptionService = new SubscriptionService(githubClient, mailer, env.APP_BASE_URL);
 
   await app.register(
     (api) => {

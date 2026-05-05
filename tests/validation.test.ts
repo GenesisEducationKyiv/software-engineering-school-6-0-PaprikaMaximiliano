@@ -1,9 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-  isValidEmail,
-  isValidRepoFormat,
-  isValidToken,
-} from "../src/utils/validation.js";
+import { isValidEmail, isValidRepoFormat, isValidToken } from "../src/utils/validation.js";
 
 describe("validation", () => {
   test("validates repository format", () => {

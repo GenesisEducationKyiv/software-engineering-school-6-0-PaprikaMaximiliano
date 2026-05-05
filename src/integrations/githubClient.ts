@@ -58,8 +58,7 @@ export class GitHubClient {
     });
 
     const remaining = response.headers.get("x-ratelimit-remaining");
-    const isRateLimited =
-      response.status === 429 || (response.status === 403 && remaining === "0");
+    const isRateLimited = response.status === 429 || (response.status === 403 && remaining === "0");
 
     if (isRateLimited) {
       throw new GitHubRateLimitError({

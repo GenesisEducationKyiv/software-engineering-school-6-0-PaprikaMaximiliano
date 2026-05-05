@@ -1,8 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 
-function toSingleHeaderValue(
-  value: string | string[] | undefined,
-): string | null {
+function toSingleHeaderValue(value: string | string[] | undefined): string | null {
   if (typeof value === "string") {
     return value.trim();
   }
