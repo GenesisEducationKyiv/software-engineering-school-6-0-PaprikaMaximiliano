@@ -2,7 +2,6 @@ import { defineConfig } from "eslint/config";
 import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-
 export default defineConfig(
   {
     ignores: ["dist/**"],
@@ -11,9 +10,12 @@ export default defineConfig(
   ...tseslint.configs.recommended,
   {
     files: ["**/*.ts"],
+    extends: [...tseslint.configs.recommendedTypeChecked],
     languageOptions: {
-      globals: {
-        ...globals.node,
+      parser: tseslint.parser,
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
@@ -30,6 +32,9 @@ export default defineConfig(
         ...globals.node,
         ...globals.vitest,
       },
+    },
+    rules: {
+      "@typescript-eslint/unbound-method": "off",
     },
   },
 );
