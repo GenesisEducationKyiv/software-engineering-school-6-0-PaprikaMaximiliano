@@ -8,10 +8,10 @@ import {
 import { isValidToken } from "../utils/validation.js";
 import { GitHubRateLimitError } from "../integrations/githubClient.js";
 
-export async function subscriptionRoutes(
+export function subscriptionRoutes(
   app: FastifyInstance,
   service: SubscriptionService,
-): Promise<void> {
+): void {
   app.post("/subscribe", async (request, reply) => {
     const body = request.body as { email?: string; repo?: string } | undefined;
     const email = body?.email?.trim() ?? "";

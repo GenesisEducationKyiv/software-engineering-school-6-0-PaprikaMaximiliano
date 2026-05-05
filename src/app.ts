@@ -41,7 +41,7 @@ export async function buildApp() {
   await app.register(sensible);
   await app.register(formbody);
 
-  app.addHook("onRequest", async (request) => {
+  app.addHook("onRequest", (request) => {
     request.raw.__requestStartAt = process.hrtime.bigint();
   });
 
@@ -85,7 +85,7 @@ export async function buildApp() {
   );
 
   await app.register(
-    async (api) => {
+    (api) => {
       api.addHook("onRequest", async (request, reply) => {
         if (!env.API_KEY) {
           return;
@@ -98,7 +98,7 @@ export async function buildApp() {
         return reply.code(401).send({ message: "Unauthorized" });
       });
 
-      await subscriptionRoutes(api, subscriptionService);
+      subscriptionRoutes(api, subscriptionService);
     },
     { prefix: "/api" },
   );
@@ -111,11 +111,11 @@ export async function buildApp() {
     app.log,
   );
 
-  app.addHook("onReady", async () => {
+  app.addHook("onReady", () => {
     scanner.start();
   });
 
-  app.addHook("onClose", async () => {
+  app.addHook("onClose", () => {
     scanner.stop();
   });
 

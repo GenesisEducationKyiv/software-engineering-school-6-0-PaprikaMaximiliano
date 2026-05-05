@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const { mockCreate, mockFindUnique, mockFindMany, mockUpdate, mockDeleteMany } =
   vi.hoisted(() => ({
@@ -101,7 +101,14 @@ const makeSubscriptionWithRepository = (
 });
 
 describe("SubscriptionService.subscribe()", () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it("throws ValidationError for an invalid email", async () => {
     const { service } = makeService();
@@ -176,7 +183,15 @@ describe("SubscriptionService.subscribe()", () => {
 
     await service.subscribe({ email: "user@example.com", repo: "owner/repo" });
 
-    const createCall = mockCreate.mock.calls[0][0];
+    const createCall = mockCreate.mock.calls[0][0] as {
+      data: {
+        repository: {
+          connectOrCreate?: {
+            create: { lastSeenTag: string };
+          };
+        };
+      };
+    };
     expect(createCall.data.repository.connectOrCreate?.create.lastSeenTag).toBe(
       "v9.9.9",
     );
@@ -196,9 +211,12 @@ describe("SubscriptionService.confirm()", () => {
   });
 
   it("updates the subscription to confirmed when it is not yet confirmed", async () => {
+    const now = new Date("2024-01-01T00:00:00.000Z");
+    vi.setSystemTime(now);
+
     mockFindUnique.mockResolvedValue(makeSubscription({ confirmed: false }));
     mockUpdate.mockResolvedValue(
-      makeSubscription({ confirmed: true, confirmedAt: new Date() }),
+      makeSubscription({ confirmed: true, confirmedAt: now }),
     );
     const { service } = makeService();
 
@@ -206,7 +224,7 @@ describe("SubscriptionService.confirm()", () => {
 
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: "sub-1" },
-      data: { confirmed: true, confirmedAt: expect.any(Date) },
+      data: { confirmed: true, confirmedAt: now },
     });
   });
 

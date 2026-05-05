@@ -30,7 +30,7 @@ export class ReleaseScanner {
 
     const run = async () => {
       await this.scanOnce();
-      this.timer = setTimeout(run, this.intervalMs);
+      this.timer = setTimeout(() => void run(), this.intervalMs);
     };
 
     void run();
