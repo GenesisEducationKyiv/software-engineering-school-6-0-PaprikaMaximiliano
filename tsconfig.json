@@ -15,7 +15,7 @@
   "include": [
     "src/**/*.ts",
     "tests/**/*.ts",
-    "eslint.config.js",
+    "eslint.config.ts",
     "prisma.config.ts"
   ]
 }
