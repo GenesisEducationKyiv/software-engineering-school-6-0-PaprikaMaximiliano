@@ -3,6 +3,8 @@ import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import unusedImports from "eslint-plugin-unused-imports";
+import importXPlugin from "eslint-plugin-import-x";
 
 export default defineConfig(
   {
@@ -20,11 +22,23 @@ export default defineConfig(
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    plugins: {
+      "unused-imports": unusedImports,
+      "import-x": importXPlugin,
+    },
     rules: {
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      "@typescript-eslint/no-unused-vars": "off",
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": [
+        "warn",
+        {
+          vars: "all",
+          varsIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+        },
       ],
+      "import-x/no-empty-named-blocks": "error",
     },
   },
   {
