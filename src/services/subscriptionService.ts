@@ -2,10 +2,7 @@ import { randomUUID } from "node:crypto";
 import { prisma } from "../lib/prisma.js";
 import type { SubscribeInput, SubscriptionResponse } from "../types.js";
 import { isValidEmail, isValidRepoFormat } from "../utils/validation.js";
-import {
-  GitHubClient,
-  GitHubNotFoundError,
-} from "../integrations/githubClient.js";
+import { GitHubClient, GitHubNotFoundError } from "../integrations/githubClient.js";
 import { Mailer } from "../integrations/mailer.js";
 
 export class SubscriptionConflictError extends Error {}
@@ -24,14 +21,12 @@ export class SubscriptionService {
       throw new ValidationError("Invalid input");
     }
 
-    const latestTag = await this.githubClient
-      .getLatestReleaseTag(input.repo)
-      .catch((error) => {
-        if (error instanceof GitHubNotFoundError) {
-          throw new ResourceNotFoundError("Repository not found");
-        }
-        throw error;
-      });
+    const latestTag = await this.githubClient.getLatestReleaseTag(input.repo).catch((error) => {
+      if (error instanceof GitHubNotFoundError) {
+        throw new ResourceNotFoundError("Repository not found");
+      }
+      throw error;
+    });
 
     const [owner, name] = input.repo.split("/");
     const confirmationToken = randomUUID();

@@ -15,10 +15,7 @@ vi.mock("../src/lib/prisma.js", () => ({
 }));
 
 import { ReleaseScanner } from "../src/services/releaseScanner.js";
-import {
-  GitHubClient,
-  GitHubRateLimitError,
-} from "../src/integrations/githubClient.js";
+import { GitHubClient, GitHubRateLimitError } from "../src/integrations/githubClient.js";
 import type { Mailer } from "../src/integrations/mailer.js";
 
 type RepositoryWithSubscriptions = {
@@ -61,13 +58,7 @@ const makeScanner = () => {
   const github = makeGithubClient();
   const mailer = makeMailer() as Mailer;
   const logger = makeLogger();
-  const scanner = new ReleaseScanner(
-    github,
-    mailer,
-    10_000,
-    "https://myapp.com",
-    logger,
-  );
+  const scanner = new ReleaseScanner(github, mailer, 10_000, "https://myapp.com", logger);
   return { scanner, github, mailer, logger };
 };
 
@@ -78,9 +69,7 @@ describe("ReleaseScanner.scanOnce()", () => {
   it("does nothing if the tag has not changed", async () => {
     mockFindMany.mockResolvedValue([makeRepo({ lastSeenTag: "v18.0.0" })]);
     const { scanner, mailer } = makeScanner();
-    vi.spyOn(scanner["githubClient"], "getLatestReleaseTag").mockResolvedValue(
-      "v18.0.0",
-    );
+    vi.spyOn(scanner["githubClient"], "getLatestReleaseTag").mockResolvedValue("v18.0.0");
 
     await scanner.scanOnce();
 
@@ -91,9 +80,7 @@ describe("ReleaseScanner.scanOnce()", () => {
   it("does nothing if the latest tag is null", async () => {
     mockFindMany.mockResolvedValue([makeRepo()]);
     const { scanner, mailer } = makeScanner();
-    vi.spyOn(scanner["githubClient"], "getLatestReleaseTag").mockResolvedValue(
-      null,
-    );
+    vi.spyOn(scanner["githubClient"], "getLatestReleaseTag").mockResolvedValue(null);
 
     await scanner.scanOnce();
 
@@ -106,9 +93,7 @@ describe("ReleaseScanner.scanOnce()", () => {
     mockFindMany.mockResolvedValue([repo]);
     mockUpdateMany.mockResolvedValue({ count: 1 });
     const { scanner, mailer, logger } = makeScanner();
-    vi.spyOn(scanner["githubClient"], "getLatestReleaseTag").mockResolvedValue(
-      "v19.0.0",
-    );
+    vi.spyOn(scanner["githubClient"], "getLatestReleaseTag").mockResolvedValue("v19.0.0");
 
     await scanner.scanOnce();
 
@@ -133,9 +118,7 @@ describe("ReleaseScanner.scanOnce()", () => {
     mockFindMany.mockResolvedValue([makeRepo()]);
     mockUpdateMany.mockResolvedValue({ count: 0 });
     const { scanner, mailer, logger } = makeScanner();
-    vi.spyOn(scanner["githubClient"], "getLatestReleaseTag").mockResolvedValue(
-      "v19.0.0",
-    );
+    vi.spyOn(scanner["githubClient"], "getLatestReleaseTag").mockResolvedValue("v19.0.0");
 
     await scanner.scanOnce();
 
