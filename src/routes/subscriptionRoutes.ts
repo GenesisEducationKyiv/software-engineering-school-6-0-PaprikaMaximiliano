@@ -1,11 +1,8 @@
 import type { FastifyInstance } from "fastify";
-import {
-  ResourceNotFoundError,
-  SubscriptionConflictError,
-  SubscriptionService,
-} from "../services/subscriptionService.js";
+import { ResourceNotFoundError, SubscriptionConflictError } from "../errors";
+import { SubscriptionService } from "../services/subscriptionService";
 import { subscribeRequestSchema, subscriptionsQuerySchema, tokenParamSchema } from "../schemas";
-import { GitHubRateLimitError } from "../integrations/githubClient.js";
+import { GitHubRateLimitError } from "../errors";
 import { type ZodTypeProvider } from "fastify-type-provider-zod";
 
 export function subscriptionRoutes(app: FastifyInstance, service: SubscriptionService): void {

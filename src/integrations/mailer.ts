@@ -1,6 +1,7 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import { IMailer } from "./ports/IMailer";
 
-export class Mailer {
+export class Mailer implements IMailer {
   private readonly transporter: Transporter;
 
   constructor(

@@ -7,13 +7,18 @@ import {
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import { Counter, Histogram, Registry, collectDefaultMetrics } from "prom-client";
-import { env } from "./config.js";
-import { GitHubClient } from "./integrations/githubClient.js";
-import { Mailer } from "./integrations/mailer.js";
-import { subscriptionRoutes } from "./routes/subscriptionRoutes.js";
-import { ReleaseScanner } from "./services/releaseScanner.js";
-import { SubscriptionService } from "./services/subscriptionService.js";
-import { isAuthorizedApiKey } from "./utils/apiKey.js";
+import { env } from "./config";
+import { GitHubClient } from "./integrations/githubClient";
+import { Mailer } from "./integrations/mailer";
+import { subscriptionRoutes } from "./routes/subscriptionRoutes";
+import { ReleaseScannerService } from "./services/releaseScanner";
+import { SubscriptionService } from "./services/subscriptionService";
+import { isAuthorizedApiKey } from "./utils/apiKey";
+import { SubscriptionRepository } from "./repositories/prisma/SubscriptionRepository";
+import { RepositoryRepository } from "./repositories/prisma/RepositoryRepository";
+import { UUIDTokenGenerator } from "./subscription/UUIDTokenGenerator";
+import { SubscriptionUrlBuilder } from "./subscription/UrlBuilder";
+import { RepoValidator } from "./subscription/RepoValidator";
 
 export async function buildApp() {
   const app = Fastify({
@@ -81,7 +86,13 @@ export async function buildApp() {
     pass: env.SMTP_PASS,
   });
 
-  const subscriptionService = new SubscriptionService(githubClient, mailer, env.APP_BASE_URL);
+  const subscriptionService = new SubscriptionService(
+    new SubscriptionRepository(),
+    mailer,
+    new UUIDTokenGenerator(),
+    new SubscriptionUrlBuilder(env.APP_BASE_URL),
+    new RepoValidator(githubClient),
+  );
 
   await app.register(
     (api) => {
@@ -104,12 +115,14 @@ export async function buildApp() {
     { prefix: "/api" },
   );
 
-  const scanner = new ReleaseScanner(
+  const repositoryRepository = new RepositoryRepository();
+  const scanner = new ReleaseScannerService(
     githubClient,
     mailer,
     env.SCAN_INTERVAL_MS,
     env.APP_BASE_URL,
     app.log,
+    repositoryRepository,
   );
 
   app.addHook("onReady", () => {

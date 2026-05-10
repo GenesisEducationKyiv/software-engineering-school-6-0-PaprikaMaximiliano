@@ -1,60 +1,48 @@
-import { randomUUID } from "node:crypto";
-import { prisma } from "../lib/prisma.js";
-import type { SubscribeInput, SubscriptionResponse } from "../types.js";
-import { GitHubClient, GitHubNotFoundError } from "../integrations/githubClient.js";
-import { Mailer } from "../integrations/mailer.js";
-
-export class SubscriptionConflictError extends Error {}
-export class ResourceNotFoundError extends Error {}
+import type { SubscribeInput, SubscriptionResponse } from "../types";
+import { ISubscriptionRepository } from "../repositories/ISubscriptionRepository";
+import { IMailer } from "../integrations/ports/IMailer";
+import { ITokenGenerator } from "../subscription/ports/ITokenGenerator";
+import { SubscriptionUrlBuilder } from "../subscription/UrlBuilder";
+import { RepoValidator } from "../subscription/RepoValidator";
+import { SubscriptionMapper } from "../subscription/SubscriptionMapper";
+import { SubscriptionAlreadyExistsError } from "../repositories/prisma/SubscriptionRepository";
+import { SubscriptionConflictError, ResourceNotFoundError } from "../errors";
 
 export class SubscriptionService {
   constructor(
-    private readonly githubClient: GitHubClient,
-    private readonly mailer: Mailer,
-    private readonly appBaseUrl: string,
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly mailer: IMailer,
+    private readonly tokenGenerator: ITokenGenerator,
+    private readonly urlBuilder: SubscriptionUrlBuilder,
+    private readonly repoValidator: RepoValidator,
   ) {}
 
   async subscribe(input: SubscribeInput): Promise<void> {
-    const latestTag = await this.githubClient.getLatestReleaseTag(input.repo).catch((error) => {
-      if (error instanceof GitHubNotFoundError) {
-        throw new ResourceNotFoundError("Repository not found");
-      }
-      throw error;
-    });
+    const latestTag = await this.repoValidator.validateAndGetLatestTag(input.repo);
 
     const [owner, name] = input.repo.split("/");
-    const confirmationToken = randomUUID();
-    const unsubscribeToken = randomUUID();
+    const confirmationToken = this.tokenGenerator.generate();
+    const unsubscribeToken = this.tokenGenerator.generate();
 
     try {
-      const created = await prisma.subscription.create({
-        data: {
-          email: input.email,
-          confirmationToken,
-          unsubscribeToken,
-          repository: {
-            connectOrCreate: {
-              where: { fullName: input.repo },
-              create: {
-                fullName: input.repo,
-                owner,
-                name,
-                lastSeenTag: latestTag,
-              },
-            },
-          },
-        },
+      const createdSubscription = await this.subscriptionRepository.create({
+        email: input.email,
+        repo: input.repo,
+        owner,
+        name,
+        latestTag,
+        confirmationToken,
+        unsubscribeToken,
       });
 
       await this.mailer.sendConfirmationEmail({
-        to: created.email,
+        to: createdSubscription.email,
         repo: input.repo,
-        confirmUrl: `${this.appBaseUrl}/api/confirm/${created.confirmationToken}`,
-        unsubscribeUrl: `${this.appBaseUrl}/api/unsubscribe/${created.unsubscribeToken}`,
+        confirmUrl: this.urlBuilder.buildConfirmUrl(createdSubscription.confirmationToken),
+        unsubscribeUrl: this.urlBuilder.buildUnsubscribeUrl(createdSubscription.unsubscribeToken),
       });
     } catch (error) {
-      const prismaError = error as { code?: string };
-      if (prismaError.code === "P2002") {
+      if (error instanceof SubscriptionAlreadyExistsError) {
         throw new SubscriptionConflictError("Already subscribed");
       }
       throw error;
@@ -62,53 +50,27 @@ export class SubscriptionService {
   }
 
   async confirm(token: string): Promise<void> {
-    const existing = await prisma.subscription.findUnique({
-      where: { confirmationToken: token },
-    });
+    const existing = await this.subscriptionRepository.getByConfirmationToken(token);
 
     if (!existing) {
       throw new ResourceNotFoundError("Token not found");
     }
 
     if (!existing.confirmed) {
-      await prisma.subscription.update({
-        where: { id: existing.id },
-        data: {
-          confirmed: true,
-          confirmedAt: new Date(),
-        },
-      });
+      await this.subscriptionRepository.confirmById(existing.id);
     }
   }
 
   async unsubscribe(token: string): Promise<void> {
-    const deleted = await prisma.subscription.deleteMany({
-      where: { unsubscribeToken: token },
-    });
+    const isDeleted = await this.subscriptionRepository.deleteByUnsubscribeToken(token);
 
-    if (deleted.count === 0) {
+    if (!isDeleted) {
       throw new ResourceNotFoundError("Token not found");
     }
   }
 
   async listByEmail(email: string): Promise<SubscriptionResponse[]> {
-    const subscriptions = await prisma.subscription.findMany({
-      where: { email },
-      include: { repository: true },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return subscriptions.map(
-      (sub: {
-        email: string;
-        confirmed: boolean;
-        repository: { fullName: string; lastSeenTag: string | null };
-      }) => ({
-        email: sub.email,
-        repo: sub.repository.fullName,
-        confirmed: sub.confirmed,
-        last_seen_tag: sub.repository.lastSeenTag,
-      }),
-    );
+    const subscriptions = await this.subscriptionRepository.getAllByEmail(email);
+    return SubscriptionMapper.toResponseList(subscriptions);
   }
 }
