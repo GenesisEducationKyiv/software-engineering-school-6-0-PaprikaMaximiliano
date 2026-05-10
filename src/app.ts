@@ -1,6 +1,11 @@
 import Fastify from "fastify";
 import formbody from "@fastify/formbody";
 import sensible from "@fastify/sensible";
+import {
+  serializerCompiler,
+  validatorCompiler,
+  type ZodTypeProvider,
+} from "fastify-type-provider-zod";
 import { Counter, Histogram, Registry, collectDefaultMetrics } from "prom-client";
 import { env } from "./config.js";
 import { GitHubClient } from "./integrations/githubClient.js";
@@ -14,6 +19,9 @@ export async function buildApp() {
   const app = Fastify({
     logger: true,
   });
+
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
 
   const metricsRegistry = new Registry();
   collectDefaultMetrics({ register: metricsRegistry });
@@ -36,7 +44,8 @@ export async function buildApp() {
   await app.register(sensible);
   await app.register(formbody);
 
-  app.addHook("onRequest", (request) => {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  app.addHook("onRequest", async (request) => {
     request.raw.__requestStartAt = process.hrtime.bigint();
   });
 
@@ -76,7 +85,9 @@ export async function buildApp() {
 
   await app.register(
     (api) => {
-      api.addHook("onRequest", async (request, reply) => {
+      const typedApi = api.withTypeProvider<ZodTypeProvider>();
+
+      typedApi.addHook("onRequest", async (request, reply) => {
         if (!env.API_KEY) {
           return;
         }

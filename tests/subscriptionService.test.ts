@@ -22,7 +22,6 @@ vi.mock("../src/lib/prisma.js", () => ({
 import {
   SubscriptionService,
   SubscriptionConflictError,
-  ValidationError,
   ResourceNotFoundError,
 } from "../src/services/subscriptionService.js";
 import {
@@ -61,8 +60,8 @@ const makeService = () => {
 const makeSubscription = (overrides: Partial<Subscription> = {}): Subscription => ({
   id: "sub-1",
   email: "user@example.com",
-  confirmationToken: "confirm-token",
-  unsubscribeToken: "unsub-token",
+  confirmationToken: "123e4567-e89b-4567-a456-426614174000",
+  unsubscribeToken: "123e4567-e89b-4567-a456-426614174001",
   confirmed: false,
   confirmedAt: null,
   repositoryId: "repo-1",
@@ -102,22 +101,6 @@ describe("SubscriptionService.subscribe()", () => {
     vi.useRealTimers();
   });
 
-  it("throws ValidationError for an invalid email", async () => {
-    const { service } = makeService();
-
-    await expect(service.subscribe({ email: "not-an-email", repo: "owner/repo" })).rejects.toThrow(
-      ValidationError,
-    );
-  });
-
-  it("throws ValidationError for an invalid repo format", async () => {
-    const { service } = makeService();
-
-    await expect(service.subscribe({ email: "user@example.com", repo: "badrepo" })).rejects.toThrow(
-      ValidationError,
-    );
-  });
-
   it("throws ResourceNotFoundError when the GitHub repo does not exist", async () => {
     const { service, github } = makeService();
     vi.spyOn(github, "getLatestReleaseTag").mockRejectedValue(new GitHubNotFoundError("not found"));
@@ -149,8 +132,8 @@ describe("SubscriptionService.subscribe()", () => {
 
   it("creates a subscription and sends a confirmation email on the happy path", async () => {
     const created = makeSubscription({
-      confirmationToken: "confirm-token-uuid",
-      unsubscribeToken: "unsub-token-uuid",
+      confirmationToken: "123e4567-e89b-4567-a456-426614174000",
+      unsubscribeToken: "123e4567-e89b-4567-a456-426614174001",
     });
     mockCreate.mockResolvedValue(created);
     const { service, mailer } = makeService();
@@ -161,8 +144,8 @@ describe("SubscriptionService.subscribe()", () => {
     expect(mailer.sendConfirmationEmail).toHaveBeenCalledWith({
       to: "user@example.com",
       repo: "owner/repo",
-      confirmUrl: "https://example.com/api/confirm/confirm-token-uuid",
-      unsubscribeUrl: "https://example.com/api/unsubscribe/unsub-token-uuid",
+      confirmUrl: "https://example.com/api/confirm/123e4567-e89b-4567-a456-426614174000",
+      unsubscribeUrl: "https://example.com/api/unsubscribe/123e4567-e89b-4567-a456-426614174001",
     });
   });
 
@@ -193,7 +176,9 @@ describe("SubscriptionService.confirm()", () => {
     mockFindUnique.mockResolvedValue(null);
     const { service } = makeService();
 
-    await expect(service.confirm("bad-token")).rejects.toThrow(ResourceNotFoundError);
+    await expect(service.confirm("123e4567-e89b-4567-a456-426614174999")).rejects.toThrow(
+      ResourceNotFoundError,
+    );
   });
 
   it("updates the subscription to confirmed when it is not yet confirmed", async () => {
@@ -204,7 +189,7 @@ describe("SubscriptionService.confirm()", () => {
     mockUpdate.mockResolvedValue(makeSubscription({ confirmed: true, confirmedAt: now }));
     const { service } = makeService();
 
-    await service.confirm("valid-token");
+    await service.confirm("123e4567-e89b-4567-a456-426614174000");
 
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: "sub-1" },
@@ -216,7 +201,7 @@ describe("SubscriptionService.confirm()", () => {
     mockFindUnique.mockResolvedValue(makeSubscription({ confirmed: true }));
     const { service } = makeService();
 
-    await service.confirm("valid-token");
+    await service.confirm("123e4567-e89b-4567-a456-426614174000");
 
     expect(mockUpdate).not.toHaveBeenCalled();
   });
@@ -229,28 +214,26 @@ describe("SubscriptionService.unsubscribe()", () => {
     mockDeleteMany.mockResolvedValue({ count: 0 });
     const { service } = makeService();
 
-    await expect(service.unsubscribe("ghost-token")).rejects.toThrow(ResourceNotFoundError);
+    await expect(service.unsubscribe("123e4567-e89b-4567-a456-426614174999")).rejects.toThrow(
+      ResourceNotFoundError,
+    );
   });
 
   it("deletes the matching subscription on a valid token", async () => {
     mockDeleteMany.mockResolvedValue({ count: 1 });
     const { service } = makeService();
 
-    await expect(service.unsubscribe("valid-token")).resolves.toBeUndefined();
+    await expect(
+      service.unsubscribe("123e4567-e89b-4567-a456-426614174001"),
+    ).resolves.toBeUndefined();
     expect(mockDeleteMany).toHaveBeenCalledWith({
-      where: { unsubscribeToken: "valid-token" },
+      where: { unsubscribeToken: "123e4567-e89b-4567-a456-426614174001" },
     });
   });
 });
 
 describe("SubscriptionService.listByEmail()", () => {
   beforeEach(() => vi.resetAllMocks());
-
-  it("throws ValidationError for an invalid email", async () => {
-    const { service } = makeService();
-
-    await expect(service.listByEmail("not-valid")).rejects.toThrow(ValidationError);
-  });
 
   it("maps Prisma rows to the SubscriptionResponse shape correctly", async () => {
     mockFindMany.mockResolvedValue([

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -12,10 +12,5 @@
     "resolveJsonModule": true,
     "types": ["node", "vitest/globals"]
   },
-  "include": [
-    "src/**/*.ts",
-    "tests/**/*.ts",
-    "eslint.config.ts",
-    "prisma.config.ts"
-  ]
+  "include": ["src/**/*.ts", "tests/**/*.ts", "eslint.config.ts", "prisma.config.ts"]
 }

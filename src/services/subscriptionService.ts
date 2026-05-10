@@ -1,12 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "../lib/prisma.js";
 import type { SubscribeInput, SubscriptionResponse } from "../types.js";
-import { isValidEmail, isValidRepoFormat } from "../utils/validation.js";
 import { GitHubClient, GitHubNotFoundError } from "../integrations/githubClient.js";
 import { Mailer } from "../integrations/mailer.js";
 
 export class SubscriptionConflictError extends Error {}
-export class ValidationError extends Error {}
 export class ResourceNotFoundError extends Error {}
 
 export class SubscriptionService {
@@ -17,10 +15,6 @@ export class SubscriptionService {
   ) {}
 
   async subscribe(input: SubscribeInput): Promise<void> {
-    if (!isValidEmail(input.email) || !isValidRepoFormat(input.repo)) {
-      throw new ValidationError("Invalid input");
-    }
-
     const latestTag = await this.githubClient.getLatestReleaseTag(input.repo).catch((error) => {
       if (error instanceof GitHubNotFoundError) {
         throw new ResourceNotFoundError("Repository not found");
@@ -98,10 +92,6 @@ export class SubscriptionService {
   }
 
   async listByEmail(email: string): Promise<SubscriptionResponse[]> {
-    if (!isValidEmail(email)) {
-      throw new ValidationError("Invalid email");
-    }
-
     const subscriptions = await prisma.subscription.findMany({
       where: { email },
       include: { repository: true },
