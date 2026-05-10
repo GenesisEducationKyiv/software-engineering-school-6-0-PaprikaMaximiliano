@@ -1,10 +1,10 @@
-import { ReleaseDetector } from "../release/ReleaseDetetector.js";
-import { ReleaseNotifier } from "../release/ReleaseNotifier.js";
-import { RateLimitPauser } from "../scheduling/RateLimitPauser.js";
-import { ScheduledTask } from "../scheduling/ScheduledTask.js";
-import { IMailer } from "../integrations/ports/IMailer.js";
-import { ISourceControlClient } from "../integrations/ports/ISourceControlClient.js";
-import { IRepositoryRepository } from "../repositories/IRepositoryRepository.js";
+import { ReleaseDetector } from "../release/ReleaseDetector";
+import { ReleaseNotifier } from "../release/ReleaseNotifier";
+import { RateLimitPauser } from "../scheduling/RateLimitPauser";
+import { ScheduledTask } from "../scheduling/ScheduledTask";
+import { IMailer } from "../integrations/ports/IMailer";
+import { ISourceControlClient } from "../integrations/ports/ISourceControlClient";
+import { IRepositoryRepository } from "../repositories/IRepositoryRepository";
 import { ILogger } from "../logger/ILogger";
 
 export class ReleaseScannerService {

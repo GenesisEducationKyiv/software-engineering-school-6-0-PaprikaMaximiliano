@@ -8,11 +8,11 @@ import {
 } from "fastify-type-provider-zod";
 import { Counter, Histogram, Registry, collectDefaultMetrics } from "prom-client";
 import { env } from "./config";
-import { GitHubClient } from "./integrations/githubClient";
-import { Mailer } from "./integrations/mailer";
+import { GitHubClient } from "./integrations/GithubClient";
+import { Mailer } from "./integrations/Mailer";
 import { subscriptionRoutes } from "./routes/subscriptionRoutes";
-import { ReleaseScannerService } from "./services/releaseScanner";
-import { SubscriptionService } from "./services/subscriptionService";
+import { ReleaseScannerService } from "./services/ReleaseScanner";
+import { SubscriptionService } from "./services/SubscriptionService";
 import { isAuthorizedApiKey } from "./utils/apiKey";
 import { SubscriptionRepository } from "./repositories/prisma/SubscriptionRepository";
 import { RepositoryRepository } from "./repositories/prisma/RepositoryRepository";
@@ -49,6 +49,7 @@ export async function buildApp() {
   await app.register(sensible);
   await app.register(formbody);
 
+  // Fastify's plugin system requires an async function, even if we don't have any async setup here
   // eslint-disable-next-line @typescript-eslint/require-await
   app.addHook("onRequest", async (request) => {
     request.raw.__requestStartAt = process.hrtime.bigint();

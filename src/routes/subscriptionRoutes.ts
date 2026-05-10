@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { ResourceNotFoundError, SubscriptionConflictError } from "../errors";
-import { SubscriptionService } from "../services/subscriptionService";
+import { SubscriptionService } from "../services/SubscriptionService";
 import { subscribeRequestSchema, subscriptionsQuerySchema, tokenParamSchema } from "../schemas";
 import { GitHubRateLimitError } from "../errors";
 import { type ZodTypeProvider } from "fastify-type-provider-zod";
