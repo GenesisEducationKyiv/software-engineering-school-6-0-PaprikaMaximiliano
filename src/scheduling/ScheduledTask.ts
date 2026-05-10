@@ -2,6 +2,7 @@ import { ILogger } from "../logger/ILogger";
 
 export class ScheduledTask {
   private timer: NodeJS.Timeout | null = null;
+  private isStarted = false;
 
   constructor(
     private readonly task: () => Promise<void>,
@@ -10,7 +11,8 @@ export class ScheduledTask {
   ) {}
 
   start(): void {
-    if (this.timer) return;
+    if (this.isStarted) return;
+    this.isStarted = true;
 
     const run = async () => {
       try {
@@ -18,13 +20,16 @@ export class ScheduledTask {
       } catch (error) {
         this.logger.error({ error }, "scheduled task failed");
       }
-      this.timer = setTimeout(() => void run(), this.intervalMs);
+      if (this.isStarted) {
+        this.timer = setTimeout(() => void run(), this.intervalMs);
+      }
     };
 
     void run();
   }
 
   stop(): void {
+    this.isStarted = false;
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
