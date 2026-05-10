@@ -5,6 +5,7 @@ import tseslint from "typescript-eslint";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import unusedImports from "eslint-plugin-unused-imports";
 import importXPlugin from "eslint-plugin-import-x";
+import vitest from "@vitest/eslint-plugin";
 
 export default defineConfig(
   {
@@ -42,14 +43,19 @@ export default defineConfig(
     },
   },
   {
-    files: ["tests/**/*.ts"],
+    files: ["tests/**"],
     languageOptions: {
       globals: {
         ...globals.node,
         ...globals.vitest,
       },
     },
+    plugins: {
+      vitest,
+    },
     rules: {
+      ...vitest.configs.recommended.rules,
+      "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/unbound-method": "off",
     },
   },
