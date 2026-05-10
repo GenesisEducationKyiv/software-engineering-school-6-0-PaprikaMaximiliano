@@ -11,6 +11,7 @@
     "db:deploy": "npx prisma migrate deploy && npx prisma generate",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   },
