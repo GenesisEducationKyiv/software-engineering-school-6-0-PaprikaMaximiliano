@@ -46,4 +46,4 @@
 
 ### DB schema
 
-![img.png](../ADR/images/db_scheme.png)
+Схема ДБ у [`ADR-002`](../ADR/ADR-002-database.md)

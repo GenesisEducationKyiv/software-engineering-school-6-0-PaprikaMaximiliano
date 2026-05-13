@@ -43,7 +43,31 @@
 
 **Схема бази даних**
 
-![alt text](images/db_scheme.png)
+repository
+
+| Column      | Type      | Nullable | Default           | Description                                        |
+| ----------- | --------- | -------- | ----------------- | -------------------------------------------------- |
+| id          | UUID      | No       | -                 | Primary key, auto-generated                        |
+| fullName    | TEXT      | No       | -                 | Full name of repository (e.g. vercel/next.js)      |
+| owner       | TEXT      | No       | -                 | Owner of repository (e.g. vercel)                  |
+| name        | TEXT      | No       | -                 | Name of repository (e.g. next.js)                  |
+| lastSeenTag | TIMESTAMP | Yes      | -                 | Last release tag the subscriber was notified about |
+| created_at  | TIMESTAMP | No       | CURRENT_TIMESTAMP | Record creation time (UTC)                         |
+| updatedAt   | TIMESTAMP | No       | CURRENT_TIMESTAMP | Last modification time (UTC)                       |
+
+subscriptions
+
+| Column            | Type      | Nullable | Default           | Description                              |
+| ----------------- | --------- | -------- | ----------------- | ---------------------------------------- |
+| id                | UUID      | No       | -                 | Primary key, auto-generated              |
+| email             | TEXT      | No       | -                 | Email of subsription owner               |
+| confirmed         | BOOL      | No       | FALSE             | Is subcription confirmed flag            |
+| confirmedAt       | TIMESTAMP | Yes      | -                 | Subscription confirmation time (UTC)     |
+| confirmationToken | UUID      | No       | -                 | Token used for subscription confirmation |
+| unsubscribeToken  | UUID      | No       | -                 | Token used for subscription cancellation |
+| repositoryId      | UUID      | No       | -                 | Foreign key, references repository table |
+| created_at        | TIMESTAMP | No       | CURRENT_TIMESTAMP | Record creation time (UTC)               |
+| updatedAt         | TIMESTAMP | No       | CURRENT_TIMESTAMP | Last modification time (UTC)             |
 
 **Наслідки**
 
