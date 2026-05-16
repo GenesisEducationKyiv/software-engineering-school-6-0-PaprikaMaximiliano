@@ -10,7 +10,7 @@ export class ReleaseNotifier {
   ) {}
 
   async notifySubscribers(repo: RepositoryWithSubscriptions, tag: string): Promise<void> {
-    await Promise.all(
+    await Promise.allSettled(
       repo.subscriptions.map((subscription) =>
         this.mailer.sendReleaseEmail({
           to: subscription.email,
