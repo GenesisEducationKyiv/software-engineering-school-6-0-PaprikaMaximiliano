@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: release_notifier_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d release_notifier_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  test:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/release_notifier_test?schema=public
+      APP_BASE_URL: http://localhost:3000
+      MAIL_FROM: noreply@release-notifier.local
+      API_KEY: integration-test-api-key
+      SCAN_INTERVAL_MS: 60000
+      GITHUB_TOKEN: ""
+      SMTP_HOST: ""
+      SMTP_PORT: 587
+      SMTP_SECURE: "false"
+      SMTP_USER: ""
+      SMTP_PASS: ""
+    command: sh -c "npm run db:deploy && npm run test:integration:container"

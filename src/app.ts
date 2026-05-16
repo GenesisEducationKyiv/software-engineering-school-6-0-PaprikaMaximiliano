@@ -10,17 +10,33 @@ import { Counter, Histogram, Registry, collectDefaultMetrics } from "prom-client
 import { env } from "./config";
 import { GitHubClient } from "./integrations/GithubClient";
 import { Mailer } from "./integrations/Mailer";
+import type { IMailer } from "./integrations/ports/IMailer";
+import type { ISourceControlClient } from "./integrations/ports/ISourceControlClient";
 import { subscriptionRoutes } from "./routes/subscriptionRoutes";
 import { ReleaseScannerService } from "./services/ReleaseScanner";
 import { SubscriptionService } from "./services/SubscriptionService";
+import type { IRepositoryRepository } from "./repositories/IRepositoryRepository";
 import { isAuthorizedApiKey } from "./utils/apiKey";
 import { SubscriptionRepository } from "./repositories/prisma/SubscriptionRepository";
 import { RepositoryRepository } from "./repositories/prisma/RepositoryRepository";
+import type { ISubscriptionRepository } from "./repositories/ISubscriptionRepository";
+import type { ITokenGenerator } from "./subscription/ports/ITokenGenerator";
 import { UUIDTokenGenerator } from "./subscription/UUIDTokenGenerator";
 import { SubscriptionUrlBuilder } from "./subscription/UrlBuilder";
 import { RepoValidator } from "./subscription/RepoValidator";
 
-export async function buildApp() {
+export interface BuildAppOptions {
+  apiKey?: string | null;
+  appBaseUrl?: string;
+  enableScanner?: boolean;
+  githubClient?: ISourceControlClient;
+  mailer?: IMailer;
+  repositoryRepository?: IRepositoryRepository;
+  subscriptionRepository?: ISubscriptionRepository;
+  tokenGenerator?: ITokenGenerator;
+}
+
+export async function buildApp(options: BuildAppOptions = {}) {
   const app = Fastify({
     logger: true,
   });
@@ -78,33 +94,39 @@ export async function buildApp() {
     return metricsRegistry.metrics();
   });
 
-  const githubClient = new GitHubClient(env.GITHUB_TOKEN);
-  const mailer = new Mailer(env.MAIL_FROM, {
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_SECURE,
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASS,
-  });
+  const githubClient = options.githubClient ?? new GitHubClient(env.GITHUB_TOKEN);
+  const mailer =
+    options.mailer ??
+    new Mailer(env.MAIL_FROM, {
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: env.SMTP_SECURE,
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
+    });
+  const subscriptionRepository = options.subscriptionRepository ?? new SubscriptionRepository();
+  const tokenGenerator = options.tokenGenerator ?? new UUIDTokenGenerator();
+  const appBaseUrl = options.appBaseUrl ?? env.APP_BASE_URL;
 
   const subscriptionService = new SubscriptionService(
-    new SubscriptionRepository(),
+    subscriptionRepository,
     mailer,
-    new UUIDTokenGenerator(),
-    new SubscriptionUrlBuilder(env.APP_BASE_URL),
+    tokenGenerator,
+    new SubscriptionUrlBuilder(appBaseUrl),
     new RepoValidator(githubClient),
   );
 
   await app.register(
     (api) => {
       const typedApi = api.withTypeProvider<ZodTypeProvider>();
+      const apiKey = options.apiKey ?? env.API_KEY;
 
       typedApi.addHook("onRequest", async (request, reply) => {
-        if (!env.API_KEY) {
+        if (!apiKey) {
           return;
         }
 
-        if (isAuthorizedApiKey(request.headers, env.API_KEY)) {
+        if (isAuthorizedApiKey(request.headers, apiKey)) {
           return;
         }
 
@@ -116,23 +138,25 @@ export async function buildApp() {
     { prefix: "/api" },
   );
 
-  const repositoryRepository = new RepositoryRepository();
-  const scanner = new ReleaseScannerService(
-    githubClient,
-    mailer,
-    env.SCAN_INTERVAL_MS,
-    env.APP_BASE_URL,
-    app.log,
-    repositoryRepository,
-  );
+  if (options.enableScanner !== false) {
+    const repositoryRepository = options.repositoryRepository ?? new RepositoryRepository();
+    const scanner = new ReleaseScannerService(
+      githubClient,
+      mailer,
+      env.SCAN_INTERVAL_MS,
+      appBaseUrl,
+      app.log,
+      repositoryRepository,
+    );
 
-  app.addHook("onReady", () => {
-    scanner.start();
-  });
+    app.addHook("onReady", () => {
+      scanner.start();
+    });
 
-  app.addHook("onClose", () => {
-    scanner.stop();
-  });
+    app.addHook("onClose", () => {
+      scanner.stop();
+    });
+  }
 
   return app;
 }

@@ -16,6 +16,7 @@ COPY prisma.config.ts ./
 COPY prisma ./prisma
 COPY tsconfig.json ./
 COPY src ./src
+COPY tests ./tests
 
 EXPOSE 3000
 
