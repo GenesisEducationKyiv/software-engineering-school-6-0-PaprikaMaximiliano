@@ -7,7 +7,7 @@ import { SubscriptionUrlBuilder } from "../src/subscription/UrlBuilder";
 import { RepoValidator } from "../src/subscription/RepoValidator";
 import { SubscriptionAlreadyExistsError } from "../src/repositories/prisma/SubscriptionRepository";
 import { SubscriptionConflictError, ResourceNotFoundError } from "../src/errors";
-import { Repository, Subscription } from "../src/models";
+import { Subscription, SubscriptionWithRepository } from "../src/models";
 
 describe("SubscriptionService", () => {
   const mockRepo = {
@@ -141,7 +141,7 @@ describe("SubscriptionService", () => {
             fullName: "owner/repo1",
             lastSeenTag: "v1.0.0",
           },
-        } as unknown as Subscription & { repository: Repository },
+        } as unknown as SubscriptionWithRepository,
       ];
 
       vi.mocked(mockRepo.getAllByEmail).mockResolvedValue(mockDbResult);

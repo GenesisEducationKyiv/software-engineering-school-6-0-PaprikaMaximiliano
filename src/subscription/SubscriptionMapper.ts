@@ -1,11 +1,8 @@
 import { SubscriptionResponse } from "../types";
-import { Repository, Subscription } from "../models";
+import { SubscriptionWithRepository } from "../models";
 
 export class SubscriptionMapper {
-  static toResponse(
-    this: void,
-    subscription: Subscription & { repository: Repository },
-  ): SubscriptionResponse {
+  static toResponse(this: void, subscription: SubscriptionWithRepository): SubscriptionResponse {
     return {
       email: subscription.email,
       repo: subscription.repository.fullName,
@@ -14,9 +11,7 @@ export class SubscriptionMapper {
     };
   }
 
-  static toResponseList(
-    subscriptions: Array<Subscription & { repository: Repository }>,
-  ): SubscriptionResponse[] {
+  static toResponseList(subscriptions: SubscriptionWithRepository[]): SubscriptionResponse[] {
     return subscriptions.map(this.toResponse);
   }
 }

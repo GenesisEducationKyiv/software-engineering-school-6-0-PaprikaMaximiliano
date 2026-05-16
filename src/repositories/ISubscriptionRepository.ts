@@ -1,4 +1,4 @@
-import { Repository, Subscription } from "../models";
+import { SubscriptionWithRepository, Subscription } from "../models";
 
 export interface CreateSubscriptionDTO {
   email: string;
@@ -15,5 +15,5 @@ export interface ISubscriptionRepository {
   getByConfirmationToken(token: string): Promise<Subscription | null>;
   confirmById(id: string): Promise<Subscription>;
   deleteByUnsubscribeToken(token: string): Promise<boolean>;
-  getAllByEmail(email: string): Promise<Array<Subscription & { repository: Repository }>>;
+  getAllByEmail(email: string): Promise<SubscriptionWithRepository[]>;
 }

@@ -3,7 +3,7 @@ import { ISourceControlClient } from "../integrations/ports/ISourceControlClient
 import { IRepositoryRepository } from "../repositories/IRepositoryRepository";
 import { ReleaseNotifier } from "./ReleaseNotifier";
 import { RateLimitPauser } from "../scheduling/RateLimitPauser";
-import { Repository, Subscription } from "../models";
+import { RepositoryWithSubscriptions } from "../models";
 import { GitHubRateLimitError } from "../errors";
 
 export class ReleaseDetector {
@@ -40,9 +40,7 @@ export class ReleaseDetector {
     }
   }
 
-  private async processRepository(
-    repo: Repository & { subscriptions: Subscription[] },
-  ): Promise<void> {
+  private async processRepository(repo: RepositoryWithSubscriptions): Promise<void> {
     const latestTag = await this.githubClient.getLatestReleaseTag(repo.fullName);
 
     if (!latestTag || repo.lastSeenTag === latestTag) {

@@ -1,3 +1,5 @@
+import { Repository } from "./Repository";
+
 export interface Subscription {
   id: string;
   email: string;
@@ -8,4 +10,8 @@ export interface Subscription {
   createdAt: Date;
   updatedAt: Date;
   repositoryId: string;
+}
+
+export interface SubscriptionWithRepository extends Subscription {
+  repository: Repository;
 }

@@ -5,7 +5,7 @@ import { IRepositoryRepository } from "../src/repositories/IRepositoryRepository
 import { ReleaseNotifier } from "../src/release/ReleaseNotifier";
 import { RateLimitPauser } from "../src/scheduling/RateLimitPauser";
 import { ILogger } from "../src/logger/ILogger";
-import { Repository, Subscription } from "../src/models";
+import { RepositoryWithSubscriptions, Subscription } from "../src/models";
 
 describe("ReleaseDetector", () => {
   const mockGithubClient = {
@@ -51,7 +51,7 @@ describe("ReleaseDetector", () => {
       fullName: "owner/repo",
       lastSeenTag: "v1.0.0",
       subscriptions: [] as Subscription[],
-    } as Repository & { subscriptions: Subscription[] };
+    } as RepositoryWithSubscriptions;
 
     vi.mocked(mockRateLimitPauser.isPaused).mockReturnValue(false);
     vi.mocked(mockRepoRepository.getAllWithConfirmedSubscriptions).mockResolvedValue([mockRepo]);
@@ -81,7 +81,7 @@ describe("ReleaseDetector", () => {
     const mockRepo = {
       fullName: "owner/repo",
       lastSeenTag: "v1.0.0",
-    } as Repository & { subscriptions: Subscription[] };
+    } as RepositoryWithSubscriptions;
 
     vi.mocked(mockRateLimitPauser.isPaused).mockReturnValue(false);
     vi.mocked(mockRepoRepository.getAllWithConfirmedSubscriptions).mockResolvedValue([mockRepo]);

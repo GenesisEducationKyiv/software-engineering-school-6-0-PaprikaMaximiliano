@@ -1,3 +1,5 @@
+import { Subscription } from "./Subscription";
+
 export interface Repository {
   owner: string;
   name: string;
@@ -6,4 +8,8 @@ export interface Repository {
   updatedAt: Date;
   fullName: string;
   lastSeenTag: string | null;
+}
+
+export interface RepositoryWithSubscriptions extends Repository {
+  subscriptions: Subscription[];
 }

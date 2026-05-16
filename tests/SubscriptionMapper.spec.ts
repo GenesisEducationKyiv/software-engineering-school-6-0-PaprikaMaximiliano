@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { SubscriptionMapper } from "../src/subscription/SubscriptionMapper";
-import { Subscription, Repository } from "../src/models";
+import { Repository, SubscriptionWithRepository } from "../src/models";
 
 describe("SubscriptionMapper", () => {
   const mockData = {
@@ -11,7 +11,7 @@ describe("SubscriptionMapper", () => {
       fullName: "facebook/react",
       lastSeenTag: "v18.0.0",
     } as Repository,
-  } as unknown as Subscription & { repository: Repository };
+  } as unknown as SubscriptionWithRepository;
 
   describe("toResponse", () => {
     it("should correctly map database models to a public response object", () => {

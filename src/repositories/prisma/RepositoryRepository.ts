@@ -1,12 +1,10 @@
-import { Repository, Subscription } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
+import { RepositoryWithSubscriptions } from "../../models";
 
 import { IRepositoryRepository } from "../IRepositoryRepository";
 
 export class RepositoryRepository implements IRepositoryRepository {
-  async getAllWithConfirmedSubscriptions(): Promise<
-    Array<Repository & { subscriptions: Subscription[] }>
-  > {
+  async getAllWithConfirmedSubscriptions(): Promise<RepositoryWithSubscriptions[]> {
     return await prisma.repository.findMany({
       where: {
         subscriptions: {

@@ -1,9 +1,7 @@
-import { Repository, Subscription } from "../models";
+import { RepositoryWithSubscriptions } from "../models";
 
 export interface IRepositoryRepository {
-  getAllWithConfirmedSubscriptions(): Promise<
-    Array<Repository & { subscriptions: Subscription[] }>
-  >;
+  getAllWithConfirmedSubscriptions(): Promise<RepositoryWithSubscriptions[]>;
   updateAllByIdAndLastSeenTag(
     id: string,
     lastSeenTag: string | null,

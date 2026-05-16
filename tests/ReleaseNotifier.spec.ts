@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ReleaseNotifier } from "../src/release/ReleaseNotifier";
 import { IMailer } from "../src/integrations/ports/IMailer";
 import { ILogger } from "../src/logger/ILogger";
-import { Repository, Subscription } from "../src/models";
+import { RepositoryWithSubscriptions, Subscription } from "../src/models";
 
 describe("ReleaseNotifier", () => {
   const mockMailer = {
@@ -31,7 +31,7 @@ describe("ReleaseNotifier", () => {
     const mockRepo = {
       fullName: "facebook/react",
       subscriptions: mockSubscriptions,
-    } as Repository & { subscriptions: Subscription[] };
+    } as RepositoryWithSubscriptions;
 
     const tag = "v18.2.0";
 
@@ -65,7 +65,7 @@ describe("ReleaseNotifier", () => {
     const mockRepo = {
       fullName: "empty/repo",
       subscriptions: [],
-    } as unknown as Repository & { subscriptions: Subscription[] };
+    } as unknown as RepositoryWithSubscriptions;
 
     await notifier.notifySubscribers(mockRepo, "v1.0.0");
 

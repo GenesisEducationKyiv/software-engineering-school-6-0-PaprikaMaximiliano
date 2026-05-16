@@ -2,7 +2,7 @@ import { Prisma, Subscription } from "@prisma/client";
 
 import { prisma } from "../../lib/prisma";
 import { CreateSubscriptionDTO, ISubscriptionRepository } from "../ISubscriptionRepository";
-import { Repository } from "../../models";
+import { SubscriptionWithRepository } from "../../models";
 
 export class SubscriptionAlreadyExistsError extends Error {}
 
@@ -13,7 +13,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
         createSubscriptionDto;
       return await prisma.subscription.create({
         data: {
-          email: email,
+          email,
           confirmationToken,
           unsubscribeToken,
           repository: {
@@ -63,7 +63,7 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     return deleted.count > 0;
   }
 
-  async getAllByEmail(email: string): Promise<Array<Subscription & { repository: Repository }>> {
+  async getAllByEmail(email: string): Promise<SubscriptionWithRepository[]> {
     return await prisma.subscription.findMany({
       where: { email },
       include: { repository: true },

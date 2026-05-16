@@ -1,6 +1,6 @@
 import { IMailer } from "../integrations/ports/IMailer";
 import { ILogger } from "../logger/ILogger";
-import { Repository, Subscription } from "../models";
+import { RepositoryWithSubscriptions } from "../models";
 
 export class ReleaseNotifier {
   constructor(
@@ -9,10 +9,7 @@ export class ReleaseNotifier {
     private readonly logger: ILogger,
   ) {}
 
-  async notifySubscribers(
-    repo: Repository & { subscriptions: Subscription[] },
-    tag: string,
-  ): Promise<void> {
+  async notifySubscribers(repo: RepositoryWithSubscriptions, tag: string): Promise<void> {
     await Promise.all(
       repo.subscriptions.map((subscription) =>
         this.mailer.sendReleaseEmail({
