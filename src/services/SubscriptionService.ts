@@ -43,7 +43,7 @@ export class SubscriptionService {
       });
     } catch (error) {
       if (error instanceof SubscriptionAlreadyExistsError) {
-        throw new SubscriptionConflictError("Already subscribed");
+        throw new SubscriptionConflictError("Email already subscribed to this repository");
       }
       throw error;
     }

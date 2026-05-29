@@ -9,7 +9,7 @@ export class RepoValidator {
       return await this.sourceControlClient.getLatestReleaseTag(repoFullName);
     } catch (error) {
       if (error instanceof GitHubNotFoundError) {
-        throw new ResourceNotFoundError("Repository not found");
+        throw new ResourceNotFoundError("Repository not found on GitHub");
       }
       throw error;
     }
