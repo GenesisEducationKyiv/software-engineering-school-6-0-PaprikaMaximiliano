@@ -1,19 +1,33 @@
 import Fastify from "fastify";
 import formbody from "@fastify/formbody";
 import sensible from "@fastify/sensible";
+import {
+  serializerCompiler,
+  validatorCompiler,
+  type ZodTypeProvider,
+} from "fastify-type-provider-zod";
 import { Counter, Histogram, Registry, collectDefaultMetrics } from "prom-client";
-import { env } from "./config.js";
-import { GitHubClient } from "./integrations/githubClient.js";
-import { Mailer } from "./integrations/mailer.js";
-import { subscriptionRoutes } from "./routes/subscriptionRoutes.js";
-import { ReleaseScanner } from "./services/releaseScanner.js";
-import { SubscriptionService } from "./services/subscriptionService.js";
-import { isAuthorizedApiKey } from "./utils/apiKey.js";
+import { env } from "./config";
+import { errorHandler } from "./errorHandler";
+import { GitHubClient } from "./integrations/GithubClient";
+import { Mailer } from "./integrations/Mailer";
+import { subscriptionRoutes } from "./routes/subscriptionRoutes";
+import { ReleaseScannerService } from "./services/ReleaseScanner";
+import { SubscriptionService } from "./services/SubscriptionService";
+import { isAuthorizedApiKey } from "./utils/apiKey";
+import { SubscriptionRepository } from "./repositories/prisma/SubscriptionRepository";
+import { RepositoryRepository } from "./repositories/prisma/RepositoryRepository";
+import { UUIDTokenGenerator } from "./subscription/UUIDTokenGenerator";
+import { SubscriptionUrlBuilder } from "./subscription/UrlBuilder";
+import { RepoValidator } from "./subscription/RepoValidator";
 
 export async function buildApp() {
   const app = Fastify({
     logger: true,
   });
+
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
 
   const metricsRegistry = new Registry();
   collectDefaultMetrics({ register: metricsRegistry });
@@ -36,7 +50,11 @@ export async function buildApp() {
   await app.register(sensible);
   await app.register(formbody);
 
-  app.addHook("onRequest", (request) => {
+  app.setErrorHandler(errorHandler);
+
+  // Fastify's plugin system requires an async function, even if we don't have any async setup here
+  // eslint-disable-next-line @typescript-eslint/require-await
+  app.addHook("onRequest", async (request) => {
     request.raw.__requestStartAt = process.hrtime.bigint();
   });
 
@@ -72,11 +90,19 @@ export async function buildApp() {
     pass: env.SMTP_PASS,
   });
 
-  const subscriptionService = new SubscriptionService(githubClient, mailer, env.APP_BASE_URL);
+  const subscriptionService = new SubscriptionService(
+    new SubscriptionRepository(),
+    mailer,
+    new UUIDTokenGenerator(),
+    new SubscriptionUrlBuilder(env.APP_BASE_URL),
+    new RepoValidator(githubClient),
+  );
 
   await app.register(
     (api) => {
-      api.addHook("onRequest", async (request, reply) => {
+      const typedApi = api.withTypeProvider<ZodTypeProvider>();
+
+      typedApi.addHook("onRequest", async (request, reply) => {
         if (!env.API_KEY) {
           return;
         }
@@ -93,12 +119,14 @@ export async function buildApp() {
     { prefix: "/api" },
   );
 
-  const scanner = new ReleaseScanner(
+  const repositoryRepository = new RepositoryRepository();
+  const scanner = new ReleaseScannerService(
     githubClient,
     mailer,
     env.SCAN_INTERVAL_MS,
     env.APP_BASE_URL,
     app.log,
+    repositoryRepository,
   );
 
   app.addHook("onReady", () => {

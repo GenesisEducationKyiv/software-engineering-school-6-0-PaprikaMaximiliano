@@ -1,20 +1,5 @@
-type RateLimitInfo = {
-  retryAfterSeconds: number;
-};
-
-export class GitHubRateLimitError extends Error {
-  constructor(public readonly info: RateLimitInfo) {
-    super("GitHub API rate limit exceeded");
-    this.name = "GitHubRateLimitError";
-  }
-}
-
-export class GitHubNotFoundError extends Error {
-  constructor(message = "Repository not found") {
-    super(message);
-    this.name = "GitHubNotFoundError";
-  }
-}
+import { GitHubNotFoundError, GitHubRateLimitError } from "../errors";
+import { ISourceControlClient } from "./ports/ISourceControlClient";
 
 function getResetRetryAfter(headers: Headers): number {
   const retryAfter = headers.get("retry-after");
@@ -39,7 +24,7 @@ function getResetRetryAfter(headers: Headers): number {
   return Math.max(resetEpoch - now, 1);
 }
 
-export class GitHubClient {
+export class GitHubClient implements ISourceControlClient {
   constructor(private readonly token?: string) {}
 
   private async request(path: string): Promise<Response> {
