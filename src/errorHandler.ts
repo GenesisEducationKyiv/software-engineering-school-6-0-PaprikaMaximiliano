@@ -30,6 +30,9 @@ export function errorHandler(
     return;
   }
 
-  request.log.error(error);
+  request.log.error(
+    { err: error, method: request.method, url: request.url, statusCode: 500 },
+    "internal server error",
+  );
   reply.code(500).send({ message: "Internal Server Error" });
 }
