@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Repository } from "@prisma/client";
 import { ReleaseDetector } from "../src/release/ReleaseDetector";
 import { ISourceControlClient } from "../src/integrations/ports/ISourceControlClient";
 import { IRepositoryRepository } from "../src/repositories/IRepositoryRepository";
 import { ReleaseNotifier } from "../src/release/ReleaseNotifier";
 import { RateLimitPauser } from "../src/scheduling/RateLimitPauser";
 import { ILogger } from "../src/logger/ILogger";
+import { OptimisticLockError } from "../src/errors";
 import { RepositoryWithSubscriptions, Subscription } from "../src/models";
 
 describe("ReleaseDetector", () => {
@@ -14,7 +16,7 @@ describe("ReleaseDetector", () => {
 
   const mockRepoRepository = {
     getAllWithConfirmedSubscriptions: vi.fn(),
-    updateAllByIdAndLastSeenTag: vi.fn(),
+    updateByIdAndLastSeenTag: vi.fn(),
   } as unknown as IRepositoryRepository;
 
   const mockNotifier = {
@@ -56,11 +58,14 @@ describe("ReleaseDetector", () => {
     vi.mocked(mockRateLimitPauser.isPaused).mockReturnValue(false);
     vi.mocked(mockRepoRepository.getAllWithConfirmedSubscriptions).mockResolvedValue([mockRepo]);
     vi.mocked(mockGithubClient.getLatestReleaseTag).mockResolvedValue("v1.1.0");
-    vi.mocked(mockRepoRepository.updateAllByIdAndLastSeenTag).mockResolvedValue({ count: 1 });
+    vi.mocked(mockRepoRepository.updateByIdAndLastSeenTag).mockResolvedValue({
+      id: "repo-1",
+      lastSeenTag: "v1.1.0",
+    } as Repository);
 
     await detector.detectAndNotify();
 
-    expect(mockRepoRepository.updateAllByIdAndLastSeenTag).toHaveBeenCalledWith(
+    expect(mockRepoRepository.updateByIdAndLastSeenTag).toHaveBeenCalledWith(
       "repo-1",
       "v1.0.0",
       "v1.1.0",
@@ -90,6 +95,30 @@ describe("ReleaseDetector", () => {
     await detector.detectAndNotify();
 
     expect(mockNotifier.notifySubscribers).not.toHaveBeenCalled();
-    expect(mockRepoRepository.updateAllByIdAndLastSeenTag).not.toHaveBeenCalled();
+    expect(mockRepoRepository.updateByIdAndLastSeenTag).not.toHaveBeenCalled();
+  });
+
+  it("should not notify if another process already updated lastSeenTag", async () => {
+    const mockRepo = {
+      id: "repo-1",
+      fullName: "owner/repo",
+      lastSeenTag: "v1.0.0",
+      subscriptions: [] as Subscription[],
+    } as RepositoryWithSubscriptions;
+
+    vi.mocked(mockRateLimitPauser.isPaused).mockReturnValue(false);
+    vi.mocked(mockRepoRepository.getAllWithConfirmedSubscriptions).mockResolvedValue([mockRepo]);
+    vi.mocked(mockGithubClient.getLatestReleaseTag).mockResolvedValue("v1.1.0");
+    vi.mocked(mockRepoRepository.updateByIdAndLastSeenTag).mockRejectedValue(
+      new OptimisticLockError(),
+    );
+
+    await detector.detectAndNotify();
+
+    expect(mockNotifier.notifySubscribers).not.toHaveBeenCalled();
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      { repository: "owner/repo" },
+      "skipped - already updated by another process",
+    );
   });
 });

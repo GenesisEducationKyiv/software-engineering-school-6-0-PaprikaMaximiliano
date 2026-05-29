@@ -14,6 +14,6 @@ export interface ISubscriptionRepository {
   create(createSubscriptionDto: CreateSubscriptionDTO): Promise<Subscription>;
   getByConfirmationToken(token: string): Promise<Subscription | null>;
   confirmById(id: string): Promise<Subscription>;
-  deleteByUnsubscribeToken(token: string): Promise<boolean>;
+  deleteByUnsubscribeToken(token: string): Promise<void>;
   getAllByEmail(email: string): Promise<SubscriptionWithRepository[]>;
 }

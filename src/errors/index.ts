@@ -17,6 +17,13 @@ export class ResourceNotFoundError extends AppError {
 
 export class ConflictError extends Error {}
 
+export class OptimisticLockError extends Error {
+  constructor(message = "Resource was modified by another process") {
+    super(message);
+    this.name = "OptimisticLockError";
+  }
+}
+
 export class GitHubRateLimitError extends Error {
   constructor(
     public readonly info: {

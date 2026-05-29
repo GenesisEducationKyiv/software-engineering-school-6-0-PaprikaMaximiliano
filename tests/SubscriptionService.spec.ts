@@ -122,7 +122,9 @@ describe("SubscriptionService", () => {
 
   describe("unsubscribe", () => {
     it("should throw ResourceNotFoundError if deletion fails", async () => {
-      vi.mocked(mockRepo.deleteByUnsubscribeToken).mockResolvedValue(false);
+      vi.mocked(mockRepo.deleteByUnsubscribeToken).mockRejectedValue(
+        new ResourceNotFoundError("Token not found"),
+      );
 
       await expect(service.unsubscribe("token")).rejects.toThrow(ResourceNotFoundError);
     });
