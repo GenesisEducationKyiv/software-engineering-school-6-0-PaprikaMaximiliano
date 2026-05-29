@@ -4,7 +4,7 @@
   "tags": ["red", "prometheus", "repo-release-notifier"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "10s",
   "time": {
     "from": "now-15m",
@@ -19,7 +19,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "query": "label_values(http_requests_total, route)",
+        "query": "label_values(http_requests_total{route!=\"/metrics\"}, route)",
         "refresh": 2,
         "includeAll": true,
         "allValue": ".*",
@@ -36,7 +36,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{route=~\"$route\"}[5m]))",
+          "expr": "sum(rate(http_requests_total{route=~\"$route\",route!=\"/metrics\"}[5m]))",
           "legendFormat": "req/s",
           "refId": "A"
         }
@@ -60,7 +60,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum(rate(http_request_errors_total{route=~\"$route\"}[5m]))",
+          "expr": "sum(rate(http_request_errors_total{route=~\"$route\",route!=\"/metrics\"}[5m]))",
           "legendFormat": "errors/s",
           "refId": "A"
         }
@@ -93,7 +93,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "100 * sum(rate(http_request_errors_total{route=~\"$route\"}[5m])) / sum(rate(http_requests_total{route=~\"$route\"}[5m]))",
+          "expr": "100 * sum(rate(http_request_errors_total{route=~\"$route\",route!=\"/metrics\"}[5m])) / sum(rate(http_requests_total{route=~\"$route\",route!=\"/metrics\"}[5m]))",
           "legendFormat": "error %",
           "refId": "A"
         }
@@ -126,17 +126,17 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{route=~\"$route\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{route=~\"$route\",route!=\"/metrics\"}[5m])))",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route=~\"$route\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route=~\"$route\",route!=\"/metrics\"}[5m])))",
           "legendFormat": "p95",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{route=~\"$route\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{route=~\"$route\",route!=\"/metrics\"}[5m])))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -160,7 +160,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum by (route) (rate(http_requests_total{route=~\"$route\"}[5m]))",
+          "expr": "sum by (route) (rate(http_requests_total{route=~\"$route\",route!=\"/metrics\"}[5m]))",
           "legendFormat": "{{route}}",
           "refId": "A"
         }
@@ -184,7 +184,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum by (status_code) (rate(http_requests_total{route=~\"$route\"}[5m]))",
+          "expr": "sum by (status_code) (rate(http_requests_total{route=~\"$route\",route!=\"/metrics\"}[5m]))",
           "legendFormat": "{{status_code}}",
           "refId": "A"
         }

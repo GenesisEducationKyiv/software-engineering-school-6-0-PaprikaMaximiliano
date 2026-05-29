@@ -1,5 +1,13 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { Counter, Histogram, Registry, collectDefaultMetrics } from "prom-client";
+
+function isMetricsRequest(request: FastifyRequest): boolean {
+  if (request.routeOptions.url === "/metrics") {
+    return true;
+  }
+
+  return request.url.split("?")[0] === "/metrics";
+}
 
 // Registers metrics on the root app instance (not as an encapsulated plugin) so
 // onRequest/onResponse hooks capture all routes including /api/*.
@@ -33,19 +41,24 @@ export async function registerMetrics(app: FastifyInstance): Promise<void> {
   // Fastify's plugin system requires an async function, even if we don't have any async setup here
   // eslint-disable-next-line @typescript-eslint/require-await
   app.addHook("onRequest", async (request) => {
+    if (isMetricsRequest(request)) {
+      return;
+    }
+
     request.raw.__requestStartAt = process.hrtime.bigint();
   });
 
   app.addHook("onResponse", async (request, reply) => {
+    if (isMetricsRequest(request)) {
+      return;
+    }
+
     const start = request.raw.__requestStartAt;
     if (!start) {
       return;
     }
 
     const route = request.routeOptions.url ?? "unknown";
-    if (route === "/metrics") {
-      return;
-    }
 
     const elapsedSeconds = Number(process.hrtime.bigint() - start) / 1_000_000_000;
     const labels = {
