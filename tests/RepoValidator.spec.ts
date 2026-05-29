@@ -43,7 +43,7 @@ describe("RepoValidator", () => {
     );
 
     await expect(validator.validateAndGetLatestTag("owner/invalid")).rejects.toThrow(
-      "Repository not found",
+      "Repository not found on GitHub",
     );
   });
 

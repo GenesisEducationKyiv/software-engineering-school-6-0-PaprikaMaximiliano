@@ -43,7 +43,7 @@ export class SubscriptionService {
       });
     } catch (error) {
       if (error instanceof SubscriptionAlreadyExistsError) {
-        throw new SubscriptionConflictError("Already subscribed");
+        throw new SubscriptionConflictError("Email already subscribed to this repository");
       }
       throw error;
     }
@@ -62,11 +62,7 @@ export class SubscriptionService {
   }
 
   async unsubscribe(token: string): Promise<void> {
-    const isDeleted = await this.subscriptionRepository.deleteByUnsubscribeToken(token);
-
-    if (!isDeleted) {
-      throw new ResourceNotFoundError("Token not found");
-    }
+    await this.subscriptionRepository.deleteByUnsubscribeToken(token);
   }
 
   async listByEmail(email: string): Promise<SubscriptionResponse[]> {

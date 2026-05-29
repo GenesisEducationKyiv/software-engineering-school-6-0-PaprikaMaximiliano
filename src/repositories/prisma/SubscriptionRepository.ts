@@ -1,5 +1,7 @@
 import { Prisma, Subscription } from "@prisma/client";
 
+import { ResourceNotFoundError } from "../../errors";
+import { isPrismaNotFoundError } from "../../errors/prismaErrors";
 import { prisma } from "../../lib/prisma";
 import { CreateSubscriptionDTO, ISubscriptionRepository } from "../ISubscriptionRepository";
 import { SubscriptionWithRepository } from "../../models";
@@ -47,20 +49,35 @@ export class SubscriptionRepository implements ISubscriptionRepository {
   }
 
   async confirmById(id: string): Promise<Subscription> {
-    return await prisma.subscription.update({
-      where: { id },
-      data: {
-        confirmed: true,
-        confirmedAt: new Date(),
-      },
-    });
+    try {
+      return await prisma.subscription.update({
+        where: { id },
+        data: {
+          confirmed: true,
+          confirmedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      if (isPrismaNotFoundError(error)) {
+        throw new ResourceNotFoundError("Subscription not found");
+      }
+
+      throw error;
+    }
   }
 
-  async deleteByUnsubscribeToken(token: string): Promise<boolean> {
-    const deleted = await prisma.subscription.deleteMany({
-      where: { unsubscribeToken: token },
-    });
-    return deleted.count > 0;
+  async deleteByUnsubscribeToken(token: string): Promise<void> {
+    try {
+      await prisma.subscription.delete({
+        where: { unsubscribeToken: token },
+      });
+    } catch (error) {
+      if (isPrismaNotFoundError(error)) {
+        throw new ResourceNotFoundError("Subscription with unsubscribe token not found");
+      }
+
+      throw error;
+    }
   }
 
   async getAllByEmail(email: string): Promise<SubscriptionWithRepository[]> {

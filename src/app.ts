@@ -8,6 +8,7 @@ import {
 } from "fastify-type-provider-zod";
 import { Counter, Histogram, Registry, collectDefaultMetrics } from "prom-client";
 import { env } from "./config";
+import { errorHandler } from "./errorHandler";
 import { GitHubClient } from "./integrations/GithubClient";
 import { Mailer } from "./integrations/Mailer";
 import type { IMailer } from "./integrations/ports/IMailer";
@@ -64,6 +65,8 @@ export async function buildApp(options: BuildAppOptions = {}) {
 
   await app.register(sensible);
   await app.register(formbody);
+
+  app.setErrorHandler(errorHandler);
 
   // Fastify's plugin system requires an async function, even if we don't have any async setup here
   // eslint-disable-next-line @typescript-eslint/require-await

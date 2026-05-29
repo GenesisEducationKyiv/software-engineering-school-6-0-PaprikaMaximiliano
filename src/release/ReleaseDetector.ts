@@ -4,7 +4,7 @@ import { IRepositoryRepository } from "../repositories/IRepositoryRepository";
 import { ReleaseNotifier } from "./ReleaseNotifier";
 import { RateLimitPauser } from "../scheduling/RateLimitPauser";
 import { RepositoryWithSubscriptions } from "../models";
-import { GitHubRateLimitError } from "../errors";
+import { GitHubRateLimitError, OptimisticLockError } from "../errors";
 
 export class ReleaseDetector {
   constructor(
@@ -47,18 +47,22 @@ export class ReleaseDetector {
       return;
     }
 
-    const updated = await this.repositoryRepository.updateAllByIdAndLastSeenTag(
-      repo.id,
-      repo.lastSeenTag,
-      latestTag,
-    );
-
-    if (updated.count === 0) {
-      this.logger.info(
-        { repository: repo.fullName },
-        "skipped - already updated by another process",
+    try {
+      await this.repositoryRepository.updateByIdAndLastSeenTag(
+        repo.id,
+        repo.lastSeenTag,
+        latestTag,
       );
-      return;
+    } catch (error) {
+      if (error instanceof OptimisticLockError) {
+        this.logger.info(
+          { repository: repo.fullName },
+          "skipped - already updated by another process",
+        );
+        return;
+      }
+
+      throw error;
     }
 
     await this.notifier.notifySubscribers(repo, latestTag);
