@@ -83,6 +83,35 @@ services:
       elasticsearch:
         condition: service_healthy
     command: filebeat -e --strict.perms=false
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    profiles: [monitoring]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - app
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    profiles: [monitoring]
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+
 volumes:
   postgres_data:
   elasticsearch_data:

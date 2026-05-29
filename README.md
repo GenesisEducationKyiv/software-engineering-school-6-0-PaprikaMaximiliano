@@ -51,6 +51,43 @@ docker compose --profile logging up elasticsearch kibana filebeat -d
 curl "http://localhost:9200/logs-repo-release-notifier-*/_search?pretty&size=5"
 ```
 
+## Prometheus metrics and Grafana
+
+The app exposes RED-style HTTP metrics (Rate, Errors, Duration) on `/metrics` using `prom-client`. Prometheus scrapes this endpoint; Grafana visualizes the metrics on a pre-built dashboard.
+
+### Environment variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GRAFANA_ADMIN_PASSWORD` | `admin` | Grafana admin password (Docker monitoring profile) |
+
+### Start the monitoring stack (app + Prometheus + Grafana)
+
+```bash
+docker compose --profile monitoring up -d --build
+```
+
+Start only monitoring services (if the app is already running):
+
+```bash
+docker compose --profile monitoring up prometheus grafana -d
+```
+
+### Grafana access
+
+1. Open [http://localhost:3001](http://localhost:3001)
+2. Log in with `admin` / your `GRAFANA_ADMIN_PASSWORD`
+3. Open the **Repo Release Notifier — RED** dashboard
+
+Prometheus UI: [http://localhost:9090](http://localhost:9090)
+
+### Metrics exposed
+
+- `http_requests_total` — request rate (counter)
+- `http_request_errors_total` — 5xx error rate (counter)
+- `http_request_duration_seconds` — request latency (histogram)
+- Default Node.js process metrics from `prom-client`
+
 ## Logic
 
 ### Subscriptions

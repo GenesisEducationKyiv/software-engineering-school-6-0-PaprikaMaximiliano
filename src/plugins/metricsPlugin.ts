@@ -23,6 +23,13 @@ export async function registerMetrics(app: FastifyInstance): Promise<void> {
     registers: [metricsRegistry],
   });
 
+  const requestErrors = new Counter({
+    name: "http_request_errors_total",
+    help: "Total number of HTTP requests that returned a 5xx status code",
+    labelNames: ["method", "route", "status_code"] as const,
+    registers: [metricsRegistry],
+  });
+
   // Fastify's plugin system requires an async function, even if we don't have any async setup here
   // eslint-disable-next-line @typescript-eslint/require-await
   app.addHook("onRequest", async (request) => {
@@ -35,8 +42,12 @@ export async function registerMetrics(app: FastifyInstance): Promise<void> {
       return;
     }
 
-    const elapsedSeconds = Number(process.hrtime.bigint() - start) / 1_000_000_000;
     const route = request.routeOptions.url ?? "unknown";
+    if (route === "/metrics") {
+      return;
+    }
+
+    const elapsedSeconds = Number(process.hrtime.bigint() - start) / 1_000_000_000;
     const labels = {
       method: request.method,
       route,
@@ -45,6 +56,10 @@ export async function registerMetrics(app: FastifyInstance): Promise<void> {
 
     requestCount.inc(labels);
     requestDuration.observe(labels, elapsedSeconds);
+
+    if (reply.statusCode >= 500) {
+      requestErrors.inc(labels);
+    }
   });
 
   app.get("/metrics", async (_, reply) => {
