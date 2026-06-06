@@ -29,7 +29,16 @@
 
 ## 3. High-level Architecture
 
+Система складається з двох сервісів додатку та спільної бази даних:
+
+- **Subscription API** (`app`) — публічне HTTP API (`/api/*`), внутрішнє API для сканера (`/internal/scanner/*`), доступ до PostgreSQL
+- **Release Scanner** (`release-scanner`) — фоновий воркер без доступу до БД; отримує цілі сканування та оновлює `lastSeenTag` через внутрішнє HTTP API
+
+Комунікація між сервісами — синхронний HTTP з автентифікацією `INTERNAL_API_KEY`.
+
 ![img.png](./images/high_level_diagram.png)
+
+Детальніше: [`ADR-004`](../ADR/ADR-004-release-scanner-microservice.md)
 
 ## 4. API endpoints
 
@@ -41,6 +50,15 @@
 | GET   | `/confirm/{token}`             | Підтведження підписки.                                                           |
 | POST  | `/unsubscribe/{token}`         | Відписка від розсилки сповіщень про реліз репозиторію.                           |
 | GET   | `/subscriptions?email={email}` | Отримання усіх активних підписок для певної поштової скриньки.                   |
+
+### Internal scanner API (`/internal/scanner`)
+
+Використовується лише сервісом `release-scanner`. Захищено `INTERNAL_API_KEY`.
+
+| Метод | Ендпоїнт | Опис |
+| ----- | -------- | ---- |
+| GET | `/scan-targets` | Список репозиторіїв з підтвердженими підписками для сканування |
+| PATCH | `/repositories/{id}/last-seen-tag` | Оновлення `lastSeenTag` з optimistic locking |
 
 Для детальнішої інформації відкрийте [`схему swagger`](../swagger.yaml)
 
