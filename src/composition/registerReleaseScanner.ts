@@ -1,23 +1,29 @@
 import type { FastifyInstance } from "fastify";
-import { env } from "../config";
-import { RepositoryRepository } from "../repositories/prisma/RepositoryRepository";
-import { ReleaseScannerService } from "../services/ReleaseScanner";
+import { env } from "../platform/config";
+import { ReleaseScannerService } from "../modules/release-scanner/application/ReleaseScannerService";
 import type { BuildAppOptions } from "./buildAppOptions";
-import type { AppServices } from "./createServices";
+import type { SubscriptionModule } from "./createSubscriptionModule";
+import { asRepositoryStateUpdater, asScanTargetProvider } from "./scannerPortAdapters";
 
 export function registerReleaseScanner(
   app: FastifyInstance,
   options: BuildAppOptions,
-  deps: Pick<AppServices, "githubClient" | "mailer" | "appBaseUrl">,
+  subscriptionModule: SubscriptionModule,
 ): void {
-  const repositoryRepository = options.repositoryRepository ?? new RepositoryRepository();
+  if (options.enableScanner === false) {
+    return;
+  }
+
+  const scanTargetProvider = asScanTargetProvider(subscriptionModule.scannerAccessService);
+  const stateUpdater = asRepositoryStateUpdater(subscriptionModule.scannerAccessService);
+
   const scanner = new ReleaseScannerService(
-    deps.githubClient,
-    deps.mailer,
+    subscriptionModule.githubClient,
+    subscriptionModule.mailer,
     env.SCAN_INTERVAL_MS,
-    deps.appBaseUrl,
     app.log,
-    repositoryRepository,
+    scanTargetProvider,
+    stateUpdater,
   );
 
   app.addHook("onReady", () => {

@@ -2,14 +2,13 @@ import Fastify from "fastify";
 import formbody from "@fastify/formbody";
 import sensible from "@fastify/sensible";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
-import { env } from "./config";
+import { env } from "./platform/config";
 import type { BuildAppOptions } from "./composition/buildAppOptions";
-import { createServices } from "./composition/createServices";
+import { createSubscriptionModule } from "./composition/createSubscriptionModule";
 import { registerReleaseScanner } from "./composition/registerReleaseScanner";
-import { errorHandler } from "./errorHandler";
-import { createApiRoutesPlugin } from "./plugins/apiRoutesPlugin";
-import { registerMetrics } from "./plugins/metricsPlugin";
-import { createLoggerConfig } from "./logger/loggerConfig";
+import { errorHandler } from "./platform/http/errorHandler";
+import { registerMetrics } from "./platform/http/metricsPlugin";
+import { createLoggerConfig } from "./platform/logger/loggerConfig";
 
 export type { BuildAppOptions } from "./composition/buildAppOptions";
 
@@ -33,16 +32,13 @@ export async function buildApp(options: BuildAppOptions = {}) {
 
   await registerMetrics(app);
 
-  const services = createServices(options);
-  const apiKey = options.apiKey ?? env.API_KEY;
+  const subscriptionModule = createSubscriptionModule(options);
 
-  await app.register(createApiRoutesPlugin(services.subscriptionService, apiKey), {
+  await app.register(subscriptionModule.apiPlugin, {
     prefix: "/api",
   });
 
-  if (options.enableScanner !== false) {
-    registerReleaseScanner(app, options, services);
-  }
+  registerReleaseScanner(app, options, subscriptionModule);
 
   return app;
 }
