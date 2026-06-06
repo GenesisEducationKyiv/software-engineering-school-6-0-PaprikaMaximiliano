@@ -1,4 +1,4 @@
-import type { ITokenGenerator } from "../../../src/subscription/ports/ITokenGenerator";
+import type { ITokenGenerator } from "../../../src/modules/subscription/domain/ports/ITokenGenerator";
 import { CONFIRM_TOKEN, UNSUBSCRIBE_TOKEN } from "../constants";
 
 export class DeterministicTokenGenerator implements ITokenGenerator {

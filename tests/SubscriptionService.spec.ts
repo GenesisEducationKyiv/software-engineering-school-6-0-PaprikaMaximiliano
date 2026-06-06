@@ -1,13 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SubscriptionService } from "../src/services/SubscriptionService";
-import { ISubscriptionRepository } from "../src/repositories/ISubscriptionRepository";
-import { IMailer } from "../src/integrations/ports/IMailer";
-import { ITokenGenerator } from "../src/subscription/ports/ITokenGenerator";
-import { SubscriptionUrlBuilder } from "../src/subscription/UrlBuilder";
-import { RepoValidator } from "../src/subscription/RepoValidator";
-import { SubscriptionAlreadyExistsError } from "../src/repositories/prisma/SubscriptionRepository";
-import { SubscriptionConflictError, ResourceNotFoundError } from "../src/errors";
-import { Subscription, SubscriptionWithRepository } from "../src/models";
+import { SubscriptionService } from "../src/modules/subscription/application/SubscriptionService";
+import { ISubscriptionRepository } from "../src/modules/subscription/domain/ports/ISubscriptionRepository";
+import { IMailer } from "../src/platform/integrations/ports/IMailer";
+import { ITokenGenerator } from "../src/modules/subscription/domain/ports/ITokenGenerator";
+import { SubscriptionUrlBuilder } from "../src/modules/subscription/domain/UrlBuilder";
+import { RepoValidator } from "../src/modules/subscription/domain/RepoValidator";
+import { SubscriptionAlreadyExistsError } from "../src/modules/subscription/domain/errors/SubscriptionAlreadyExistsError";
+import { SubscriptionConflictError, ResourceNotFoundError } from "../src/platform/errors";
+import {
+  Subscription,
+  SubscriptionWithRepository,
+} from "../src/modules/subscription/domain/models";
 
 describe("SubscriptionService", () => {
   const mockRepo = {

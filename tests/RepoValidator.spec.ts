@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { RepoValidator } from "../src/subscription/RepoValidator";
-import { ISourceControlClient } from "../src/integrations/ports/ISourceControlClient";
-import { ResourceNotFoundError, GitHubNotFoundError } from "../src/errors";
+import { RepoValidator } from "../src/modules/subscription/domain/RepoValidator";
+import { ISourceControlClient } from "../src/platform/integrations/ports/ISourceControlClient";
+import { ResourceNotFoundError, GitHubNotFoundError } from "../src/platform/errors";
 
 describe("RepoValidator", () => {
   const mockSourceControlClient = {
