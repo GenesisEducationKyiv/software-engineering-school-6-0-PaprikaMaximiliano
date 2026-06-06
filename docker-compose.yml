@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,7 +26,6 @@ services:
       PORT: ${PORT:-3000}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
-      SCAN_INTERVAL_MS: ${SCAN_INTERVAL_MS:-60000}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_PRETTY: "false"
       SMTP_HOST: ${SMTP_HOST:-}
@@ -36,8 +35,55 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
       API_KEY: ${API_KEY:-}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required}
     ports:
       - "3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/metrics').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  release-scanner:
+    build: .
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      SUBSCRIPTION_API_URL: http://app:3000
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      SCAN_INTERVAL_MS: ${SCAN_INTERVAL_MS:-60000}
+      HEALTH_PORT: 3002
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_PRETTY: "false"
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
+    command: npm run start:scanner
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3002/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
