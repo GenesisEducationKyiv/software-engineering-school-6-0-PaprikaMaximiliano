@@ -4,8 +4,11 @@ filebeat.autodiscover:
       hints.enabled: false
       templates:
         - condition:
-            equals:
-              docker.container.labels.com.docker.compose.service: app
+            or:
+              - equals:
+                  docker.container.labels.com.docker.compose.service: app
+              - equals:
+                  docker.container.labels.com.docker.compose.service: release-scanner
           config:
             - type: container
               paths:
