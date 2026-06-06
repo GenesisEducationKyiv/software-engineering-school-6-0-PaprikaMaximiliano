@@ -31,5 +31,13 @@ const envSchema = z.object({
     const trimmed = value.trim();
     return trimmed.length === 0 ? undefined : trimmed;
   }, z.string().min(1).optional()),
+  INTERNAL_API_KEY: z.preprocess((value) => {
+    if (typeof value !== "string") {
+      return value;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? undefined : trimmed;
+  }, z.string().min(1).optional()),
 });
 export const env = envSchema.parse(process.env);

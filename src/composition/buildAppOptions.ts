@@ -8,7 +8,6 @@ import type { ITokenGenerator } from "../modules/subscription/domain/ports/IToke
 export interface BuildAppOptions {
   apiKey?: string | null;
   appBaseUrl?: string;
-  enableScanner?: boolean;
   githubClient?: ISourceControlClient;
   logger?: FastifyServerOptions["logger"];
   mailer?: IMailer;

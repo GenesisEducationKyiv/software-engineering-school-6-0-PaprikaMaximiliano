@@ -5,7 +5,7 @@ import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod
 import { env } from "./platform/config";
 import type { BuildAppOptions } from "./composition/buildAppOptions";
 import { createSubscriptionModule } from "./composition/createSubscriptionModule";
-import { registerReleaseScanner } from "./composition/registerReleaseScanner";
+import { createScannerInternalPlugin } from "./modules/subscription/api/scannerInternalPlugin";
 import { errorHandler } from "./platform/http/errorHandler";
 import { registerMetrics } from "./platform/http/metricsPlugin";
 import { createLoggerConfig } from "./platform/logger/loggerConfig";
@@ -38,7 +38,12 @@ export async function buildApp(options: BuildAppOptions = {}) {
     prefix: "/api",
   });
 
-  registerReleaseScanner(app, options, subscriptionModule);
+  await app.register(
+    createScannerInternalPlugin(subscriptionModule.scannerAccessService, env.INTERNAL_API_KEY),
+    {
+      prefix: "/internal/scanner",
+    },
+  );
 
   return app;
 }

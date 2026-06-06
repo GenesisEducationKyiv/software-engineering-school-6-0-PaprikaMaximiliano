@@ -1,5 +1,5 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
-import { AppError, GitHubRateLimitError } from "../errors";
+import { AppError, GitHubRateLimitError, OptimisticLockError } from "../errors";
 
 export function errorHandler(
   error: Error | FastifyError,
@@ -8,6 +8,11 @@ export function errorHandler(
 ): void {
   if (error instanceof AppError) {
     reply.code(error.statusCode).send({ message: error.message });
+    return;
+  }
+
+  if (error instanceof OptimisticLockError) {
+    reply.code(409).send({ message: error.message });
     return;
   }
 
