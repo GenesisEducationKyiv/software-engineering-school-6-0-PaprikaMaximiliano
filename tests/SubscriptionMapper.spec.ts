@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { SubscriptionMapper } from "../src/subscription/SubscriptionMapper";
-import { Repository, SubscriptionWithRepository } from "../src/models";
+import { SubscriptionMapper } from "../src/modules/subscription/domain/SubscriptionMapper";
+import { Repository, SubscriptionWithRepository } from "../src/modules/subscription/domain/models";
 
 describe("SubscriptionMapper", () => {
   const mockData = {

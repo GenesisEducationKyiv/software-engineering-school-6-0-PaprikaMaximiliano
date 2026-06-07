@@ -1,5 +1,5 @@
 import { buildApp } from "../../../src/app";
-import { prisma } from "../../../src/lib/prisma";
+import { prisma } from "../../../src/platform/persistence/prisma";
 import { API_KEY, APP_BASE_URL } from "../constants";
 import { DeterministicTokenGenerator } from "../fakes/DeterministicTokenGenerator";
 import { FakeSourceControlClient } from "../fakes/FakeSourceControlClient";
@@ -13,7 +13,6 @@ export function createIntegrationTestContext() {
   const appPromise = buildApp({
     apiKey: API_KEY,
     appBaseUrl: APP_BASE_URL,
-    enableScanner: false,
     logger: false,
     mailer,
     githubClient: sourceControlClient,

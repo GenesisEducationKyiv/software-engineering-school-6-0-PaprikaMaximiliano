@@ -1,4 +1,4 @@
-import type { IMailer } from "../../../src/integrations/ports/IMailer";
+import type { IMailer } from "../../../src/platform/integrations/ports/IMailer";
 
 export class RecordingMailer implements IMailer {
   confirmationEmails: Array<{

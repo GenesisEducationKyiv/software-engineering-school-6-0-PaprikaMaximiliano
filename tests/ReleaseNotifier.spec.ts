@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ReleaseNotifier } from "../src/release/ReleaseNotifier";
-import { IMailer } from "../src/integrations/ports/IMailer";
-import { ILogger } from "../src/logger/ILogger";
-import { RepositoryWithSubscriptions, Subscription } from "../src/models";
+import { ReleaseNotifier } from "../src/modules/release-scanner/application/ReleaseNotifier";
+import { IMailer } from "../src/platform/integrations/ports/IMailer";
+import { ILogger } from "../src/platform/logger/ILogger";
+import type { ScanTarget } from "../src/modules/subscription/contracts/scannerContracts";
 
 describe("ReleaseNotifier", () => {
   const mockMailer = {
@@ -14,30 +14,35 @@ describe("ReleaseNotifier", () => {
     error: vi.fn(),
   } as unknown as ILogger;
 
-  const appBaseUrl = "https://app.test.com";
   let notifier: ReleaseNotifier;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    notifier = new ReleaseNotifier(mockMailer, appBaseUrl, mockLogger);
+    notifier = new ReleaseNotifier(mockMailer, mockLogger);
   });
 
   it("should send emails to all subscribers with correctly formatted data", async () => {
-    const mockSubscriptions: Subscription[] = [
-      { email: "user1@test.com", unsubscribeToken: "token1" } as Subscription,
-      { email: "user2@test.com", unsubscribeToken: "token2" } as Subscription,
-    ];
-
-    const mockRepo = {
+    const mockTarget: ScanTarget = {
+      id: "repo-1",
       fullName: "facebook/react",
-      subscriptions: mockSubscriptions,
-    } as RepositoryWithSubscriptions;
+      lastSeenTag: "v18.0.0",
+      subscribers: [
+        {
+          email: "user1@test.com",
+          unsubscribeUrl: "https://app.test.com/api/unsubscribe/token1",
+        },
+        {
+          email: "user2@test.com",
+          unsubscribeUrl: "https://app.test.com/api/unsubscribe/token2",
+        },
+      ],
+    };
 
     const tag = "v18.2.0";
 
     vi.mocked(mockMailer.sendReleaseEmail).mockResolvedValue(undefined);
 
-    await notifier.notifySubscribers(mockRepo, tag);
+    await notifier.notifySubscribers(mockTarget, tag);
 
     expect(mockMailer.sendReleaseEmail).toHaveBeenCalledTimes(2);
 
@@ -62,12 +67,14 @@ describe("ReleaseNotifier", () => {
   });
 
   it("should handle a repository with no subscribers gracefully", async () => {
-    const mockRepo = {
+    const mockTarget: ScanTarget = {
+      id: "repo-1",
       fullName: "empty/repo",
-      subscriptions: [],
-    } as unknown as RepositoryWithSubscriptions;
+      lastSeenTag: null,
+      subscribers: [],
+    };
 
-    await notifier.notifySubscribers(mockRepo, "v1.0.0");
+    await notifier.notifySubscribers(mockTarget, "v1.0.0");
 
     expect(mockMailer.sendReleaseEmail).not.toHaveBeenCalled();
     expect(mockLogger.info).toHaveBeenCalled();

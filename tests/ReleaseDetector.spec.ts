@@ -1,23 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Repository } from "@prisma/client";
-import { ReleaseDetector } from "../src/release/ReleaseDetector";
-import { ISourceControlClient } from "../src/integrations/ports/ISourceControlClient";
-import { IRepositoryRepository } from "../src/repositories/IRepositoryRepository";
-import { ReleaseNotifier } from "../src/release/ReleaseNotifier";
-import { RateLimitPauser } from "../src/scheduling/RateLimitPauser";
-import { ILogger } from "../src/logger/ILogger";
-import { OptimisticLockError } from "../src/errors";
-import { RepositoryWithSubscriptions, Subscription } from "../src/models";
+import { ReleaseDetector } from "../src/modules/release-scanner/application/ReleaseDetector";
+import { ISourceControlClient } from "../src/platform/integrations/ports/ISourceControlClient";
+import { ReleaseNotifier } from "../src/modules/release-scanner/application/ReleaseNotifier";
+import { RateLimitPauser } from "../src/platform/scheduling/RateLimitPauser";
+import { ILogger } from "../src/platform/logger/ILogger";
+import { OptimisticLockError } from "../src/platform/errors";
+import type { ScanTarget } from "../src/modules/subscription/contracts/scannerContracts";
+import type { ScanTargetProvider } from "../src/modules/release-scanner/ports/ScanTargetProvider";
+import type { RepositoryStateUpdater } from "../src/modules/release-scanner/ports/RepositoryStateUpdater";
 
 describe("ReleaseDetector", () => {
   const mockGithubClient = {
     getLatestReleaseTag: vi.fn(),
   } as unknown as ISourceControlClient;
 
-  const mockRepoRepository = {
-    getAllWithConfirmedSubscriptions: vi.fn(),
-    updateByIdAndLastSeenTag: vi.fn(),
-  } as unknown as IRepositoryRepository;
+  const mockScanTargetProvider = {
+    listScanTargets: vi.fn(),
+  } as unknown as ScanTargetProvider;
+
+  const mockStateUpdater = {
+    updateLastSeenTag: vi.fn(),
+  } as unknown as RepositoryStateUpdater;
 
   const mockNotifier = {
     notifySubscribers: vi.fn(),
@@ -40,7 +43,8 @@ describe("ReleaseDetector", () => {
     vi.clearAllMocks();
     detector = new ReleaseDetector(
       mockGithubClient,
-      mockRepoRepository,
+      mockScanTargetProvider,
+      mockStateUpdater,
       mockNotifier,
       mockRateLimitPauser,
       mockLogger,
@@ -48,30 +52,23 @@ describe("ReleaseDetector", () => {
   });
 
   it("should notify subscribers when a new release is detected", async () => {
-    const mockRepo = {
+    const mockTarget: ScanTarget = {
       id: "repo-1",
       fullName: "owner/repo",
       lastSeenTag: "v1.0.0",
-      subscriptions: [] as Subscription[],
-    } as RepositoryWithSubscriptions;
+      subscribers: [],
+    };
 
     vi.mocked(mockRateLimitPauser.isPaused).mockReturnValue(false);
-    vi.mocked(mockRepoRepository.getAllWithConfirmedSubscriptions).mockResolvedValue([mockRepo]);
+    vi.mocked(mockScanTargetProvider.listScanTargets).mockResolvedValue([mockTarget]);
     vi.mocked(mockGithubClient.getLatestReleaseTag).mockResolvedValue("v1.1.0");
-    vi.mocked(mockRepoRepository.updateByIdAndLastSeenTag).mockResolvedValue({
-      id: "repo-1",
-      lastSeenTag: "v1.1.0",
-    } as Repository);
+    vi.mocked(mockStateUpdater.updateLastSeenTag).mockResolvedValue(undefined);
 
     await detector.detectAndNotify();
 
-    expect(mockRepoRepository.updateByIdAndLastSeenTag).toHaveBeenCalledWith(
-      "repo-1",
-      "v1.0.0",
-      "v1.1.0",
-    );
+    expect(mockStateUpdater.updateLastSeenTag).toHaveBeenCalledWith("repo-1", "v1.0.0", "v1.1.0");
 
-    expect(mockNotifier.notifySubscribers).toHaveBeenCalledExactlyOnceWith(mockRepo, "v1.1.0");
+    expect(mockNotifier.notifySubscribers).toHaveBeenCalledExactlyOnceWith(mockTarget, "v1.1.0");
   });
 
   it("should skip processing if the rate limit pauser is active", async () => {
@@ -79,39 +76,39 @@ describe("ReleaseDetector", () => {
 
     await detector.detectAndNotify();
 
-    expect(mockRepoRepository.getAllWithConfirmedSubscriptions).not.toHaveBeenCalled();
+    expect(mockScanTargetProvider.listScanTargets).not.toHaveBeenCalled();
   });
 
   it("should not notify if the tag has not changed", async () => {
-    const mockRepo = {
+    const mockTarget: ScanTarget = {
+      id: "repo-1",
       fullName: "owner/repo",
       lastSeenTag: "v1.0.0",
-    } as RepositoryWithSubscriptions;
+      subscribers: [],
+    };
 
     vi.mocked(mockRateLimitPauser.isPaused).mockReturnValue(false);
-    vi.mocked(mockRepoRepository.getAllWithConfirmedSubscriptions).mockResolvedValue([mockRepo]);
+    vi.mocked(mockScanTargetProvider.listScanTargets).mockResolvedValue([mockTarget]);
     vi.mocked(mockGithubClient.getLatestReleaseTag).mockResolvedValue("v1.0.0");
 
     await detector.detectAndNotify();
 
     expect(mockNotifier.notifySubscribers).not.toHaveBeenCalled();
-    expect(mockRepoRepository.updateByIdAndLastSeenTag).not.toHaveBeenCalled();
+    expect(mockStateUpdater.updateLastSeenTag).not.toHaveBeenCalled();
   });
 
   it("should not notify if another process already updated lastSeenTag", async () => {
-    const mockRepo = {
+    const mockTarget: ScanTarget = {
       id: "repo-1",
       fullName: "owner/repo",
       lastSeenTag: "v1.0.0",
-      subscriptions: [] as Subscription[],
-    } as RepositoryWithSubscriptions;
+      subscribers: [],
+    };
 
     vi.mocked(mockRateLimitPauser.isPaused).mockReturnValue(false);
-    vi.mocked(mockRepoRepository.getAllWithConfirmedSubscriptions).mockResolvedValue([mockRepo]);
+    vi.mocked(mockScanTargetProvider.listScanTargets).mockResolvedValue([mockTarget]);
     vi.mocked(mockGithubClient.getLatestReleaseTag).mockResolvedValue("v1.1.0");
-    vi.mocked(mockRepoRepository.updateByIdAndLastSeenTag).mockRejectedValue(
-      new OptimisticLockError(),
-    );
+    vi.mocked(mockStateUpdater.updateLastSeenTag).mockRejectedValue(new OptimisticLockError());
 
     await detector.detectAndNotify();
 

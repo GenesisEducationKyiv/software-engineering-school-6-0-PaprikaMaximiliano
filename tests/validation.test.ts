@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { emailSchema, repoSchema, tokenSchema, subscribeRequestSchema } from "../src/schemas";
+import {
+  emailSchema,
+  repoSchema,
+  tokenSchema,
+  subscribeRequestSchema,
+} from "../src/modules/subscription/api/schemas";
 import { ZodError } from "zod";
 
 describe("validation", () => {

@@ -5,7 +5,10 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsx watch src/index.ts",
+    "dev:api": "tsx watch src/index.ts",
+    "dev:scanner": "tsx watch src/services/release-scanner/index.ts",
+    "start:api": "tsx src/index.ts",
+    "start:scanner": "tsx src/services/release-scanner/index.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "db:deploy": "npx prisma migrate deploy && npx prisma generate",

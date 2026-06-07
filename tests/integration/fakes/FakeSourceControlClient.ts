@@ -1,5 +1,5 @@
-import { GitHubNotFoundError, GitHubRateLimitError } from "../../../src/errors";
-import type { ISourceControlClient } from "../../../src/integrations/ports/ISourceControlClient";
+import { GitHubNotFoundError, GitHubRateLimitError } from "../../../src/platform/errors";
+import type { ISourceControlClient } from "../../../src/platform/integrations/ports/ISourceControlClient";
 import { TEST_TAG } from "../constants";
 
 export class FakeSourceControlClient implements ISourceControlClient {

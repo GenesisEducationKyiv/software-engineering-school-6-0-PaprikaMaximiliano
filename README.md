@@ -4,6 +4,39 @@
 - API key authentication for all `/api/*` endpoints.
 - Prometheus metrics endpoint: `/metrics`.
 
+## Architecture
+
+The system runs as two application services from the same codebase:
+
+| Service | Container | Port | Role |
+|---------|-----------|------|------|
+| Subscription API | `app` | 3000 | Public `/api/*`, internal `/internal/scanner/*`, PostgreSQL |
+| Release scanner | `release-scanner` | 3002 (health) | Polls GitHub and sends release notification emails |
+
+The scanner has no database access. It reads scan targets and updates `lastSeenTag` through the subscription API internal endpoints, authenticated with `INTERNAL_API_KEY`.
+
+### Start both services
+
+```bash
+docker compose up -d --build
+```
+
+Set `INTERNAL_API_KEY` in your environment (or `.env`) before starting Docker Compose.
+
+### Run locally without Docker
+
+Terminal 1 — subscription API:
+
+```bash
+npm run start:api
+```
+
+Terminal 2 — release scanner:
+
+```bash
+SUBSCRIPTION_API_URL=http://localhost:3000 INTERNAL_API_KEY=your-internal-key npm run start:scanner
+```
+
 ## API authentication
 
 Provide API key in one of the headers:
@@ -14,6 +47,15 @@ Provide API key in one of the headers:
 If `API_KEY` is set and token is missing or invalid API returns `401 Unauthorized`.
 
 If `API_KEY` is not set, `/api/*` endpoints are open.
+
+## Internal scanner API authentication
+
+The release-scanner service calls `/internal/scanner/*` on the subscription API using `INTERNAL_API_KEY` in the `x-api-key` header (or `Authorization: Bearer`).
+
+| Variable | Service | Description |
+|----------|---------|-------------|
+| `INTERNAL_API_KEY` | Both | Shared secret for service-to-service calls |
+| `SUBSCRIPTION_API_URL` | `release-scanner` | Base URL of the subscription API (e.g. `http://app:3000`) |
 
 ## Structured logging and ELK
 
