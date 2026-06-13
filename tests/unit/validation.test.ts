@@ -4,7 +4,7 @@ import {
   repoSchema,
   tokenSchema,
   subscribeRequestSchema,
-} from "../src/modules/subscription/api/schemas";
+} from "@/modules/subscription/api/schemas";
 import { ZodError } from "zod";
 
 describe("validation", () => {

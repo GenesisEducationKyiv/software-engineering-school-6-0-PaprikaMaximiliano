@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ReleaseNotifier } from "../src/modules/release-scanner/application/ReleaseNotifier";
-import { IMailer } from "../src/platform/integrations/ports/IMailer";
-import { ILogger } from "../src/platform/logger/ILogger";
-import type { ScanTarget } from "../src/modules/subscription/contracts/scannerContracts";
+import { ReleaseNotifier } from "@/modules/release-scanner/application/ReleaseNotifier";
+import { IMailer } from "@/platform/integrations/ports/IMailer";
+import { ILogger } from "@/platform/logger/ILogger";
+import type { ScanTarget } from "@/modules/subscription/contracts/scannerContracts";
 
 describe("ReleaseNotifier", () => {
   const mockMailer = {

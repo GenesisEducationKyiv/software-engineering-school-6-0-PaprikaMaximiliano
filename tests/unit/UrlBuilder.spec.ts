@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SubscriptionUrlBuilder } from "../src/modules/subscription/domain/UrlBuilder";
+import { SubscriptionUrlBuilder } from "@/modules/subscription/domain/UrlBuilder";
 
 describe("UrlBuilder", () => {
   const baseUrl = "https://app.example.com";

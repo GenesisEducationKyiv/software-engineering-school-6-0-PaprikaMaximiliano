@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { GitHubClient } from "../src/platform/integrations/GithubClient";
-import { GitHubNotFoundError } from "../src/platform/errors";
+import { GitHubClient } from "@/platform/integrations/GithubClient";
+import { GitHubNotFoundError } from "@/platform/errors";
 
 const mockFetch = vi.fn();
 

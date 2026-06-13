@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { RateLimitPauser } from "../src/platform/scheduling/RateLimitPauser";
+import { RateLimitPauser } from "@/platform/scheduling/RateLimitPauser";
 
 describe("RateLimitPauser", () => {
   let pauser: RateLimitPauser;

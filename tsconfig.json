@@ -10,7 +10,11 @@
     "outDir": "dist",
     "rootDir": "./",
     "resolveJsonModule": true,
-    "types": ["node", "vitest/globals"]
+    "types": ["node", "vitest/globals"],
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "eslint.config.ts", "prisma.config.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts", "eslint.config.ts", "prisma.config.ts", "vitest.config.ts"]
 }

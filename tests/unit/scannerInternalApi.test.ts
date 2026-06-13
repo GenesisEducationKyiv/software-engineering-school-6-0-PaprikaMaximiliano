@@ -1,10 +1,10 @@
 import Fastify from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { OptimisticLockError } from "../src/platform/errors";
-import { errorHandler } from "../src/platform/http/errorHandler";
-import { createScannerInternalPlugin } from "../src/modules/subscription/api/scannerInternalPlugin";
-import type { ScannerAccessService } from "../src/modules/subscription/application/ScannerAccessService";
+import { OptimisticLockError } from "@/platform/errors";
+import { errorHandler } from "@/platform/http/errorHandler";
+import { createScannerInternalPlugin } from "@/modules/subscription/api/scannerInternalPlugin";
+import type { ScannerAccessService } from "@/modules/subscription/application/ScannerAccessService";
 
 const INTERNAL_API_KEY = "internal-test-key";
 
