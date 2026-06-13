@@ -14,7 +14,9 @@ export function subscriptionRoutes(app: FastifyInstance, service: SubscriptionSe
       },
     },
     async (request, reply) => {
+      const { email, repo } = request.body;
       await service.subscribe(request.body);
+      request.log.info({ email, repository: repo }, "subscription created");
       return reply.code(200).send({ message: "Subscription successful. Confirmation email sent." });
     },
   );
@@ -28,6 +30,7 @@ export function subscriptionRoutes(app: FastifyInstance, service: SubscriptionSe
     },
     async (request, reply) => {
       await service.confirm(request.params.token);
+      request.log.info("subscription confirmed");
       return reply.code(200).send({ message: "Subscription confirmed successfully" });
     },
   );
@@ -41,6 +44,7 @@ export function subscriptionRoutes(app: FastifyInstance, service: SubscriptionSe
     },
     async (request, reply) => {
       await service.unsubscribe(request.params.token);
+      request.log.info("subscription unsubscribed");
       return reply.code(200).send({ message: "Unsubscribed successfully" });
     },
   );

@@ -14,6 +14,7 @@ export function createIntegrationTestContext() {
     apiKey: API_KEY,
     appBaseUrl: APP_BASE_URL,
     enableScanner: false,
+    logger: false,
     mailer,
     githubClient: sourceControlClient,
     tokenGenerator,

@@ -9,12 +9,18 @@ import { registerReleaseScanner } from "./composition/registerReleaseScanner";
 import { errorHandler } from "./errorHandler";
 import { createApiRoutesPlugin } from "./plugins/apiRoutesPlugin";
 import { registerMetrics } from "./plugins/metricsPlugin";
+import { createLoggerConfig } from "./logger/loggerConfig";
 
 export type { BuildAppOptions } from "./composition/buildAppOptions";
 
 export async function buildApp(options: BuildAppOptions = {}) {
   const app = Fastify({
-    logger: true,
+    logger:
+      options.logger ??
+      createLoggerConfig({
+        level: env.LOG_LEVEL,
+        pretty: env.LOG_PRETTY ?? process.env.NODE_ENV !== "production",
+      }),
   });
 
   app.setValidatorCompiler(validatorCompiler);

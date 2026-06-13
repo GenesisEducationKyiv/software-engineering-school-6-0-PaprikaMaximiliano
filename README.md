@@ -15,17 +15,78 @@ If `API_KEY` is set and token is missing or invalid API returns `401 Unauthorize
 
 If `API_KEY` is not set, `/api/*` endpoints are open.
 
-## Prometheus metrics
+## Structured logging and ELK
 
-Endpoint:
+The app uses Fastify's built-in Pino logger with ECS-compatible JSON output. In Docker, logs are written to stdout and shipped to Elasticsearch by Filebeat.
 
-- `GET /metrics`
+### Environment variables
 
-Includes:
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_LEVEL` | `info` (production) / `debug` (development) | Minimum log level |
+| `LOG_PRETTY` | `true` locally, `false` in Docker | Pretty-print logs with `pino-pretty` instead of JSON |
 
-- Default Node.js process metrics from `prom-client`.
-- `http_requests_total` counter.
-- `http_request_duration_seconds` histogram.
+### Start the full stack (app + ELK)
+
+```bash
+docker compose --profile logging up -d --build
+```
+
+Start only the ELK services (if the app is already running):
+
+```bash
+docker compose --profile logging up elasticsearch kibana filebeat -d
+```
+
+### Kibana setup
+
+1. Open [http://localhost:5601](http://localhost:5601)
+2. Create a data view: index pattern `logs-repo-release-notifier-*`, time field `@timestamp`
+3. Open **Discover** to search logs — filter on `service.name: repo-release-notifier`
+4. Optional visualizations: log volume over time, count by `log.level`, top `http.response.status_code`
+
+### Verify logs in Elasticsearch
+
+```bash
+curl "http://localhost:9200/logs-repo-release-notifier-*/_search?pretty&size=5"
+```
+
+## Prometheus metrics and Grafana
+
+The app exposes RED-style HTTP metrics (Rate, Errors, Duration) on `/metrics` using `prom-client`. Prometheus scrapes this endpoint; Grafana visualizes the metrics on a pre-built dashboard.
+
+### Environment variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GRAFANA_ADMIN_PASSWORD` | `admin` | Grafana admin password (Docker monitoring profile) |
+
+### Start the monitoring stack (app + Prometheus + Grafana)
+
+```bash
+docker compose --profile monitoring up -d --build
+```
+
+Start only monitoring services (if the app is already running):
+
+```bash
+docker compose --profile monitoring up prometheus grafana -d
+```
+
+### Grafana access
+
+1. Open [http://localhost:3001](http://localhost:3001)
+2. Log in with `admin` / your `GRAFANA_ADMIN_PASSWORD`
+3. Open the **Repo Release Notifier — RED** dashboard
+
+Prometheus UI: [http://localhost:9090](http://localhost:9090)
+
+### Metrics exposed
+
+- `http_requests_total` — request rate (counter)
+- `http_request_errors_total` — 5xx error rate (counter)
+- `http_request_duration_seconds` — request latency (histogram)
+- Default Node.js process metrics from `prom-client`
 
 ## Logic
 

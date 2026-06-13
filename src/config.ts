@@ -1,7 +1,14 @@
 import { z } from "zod";
 
+const logLevelSchema = z.enum(["debug", "info", "warn", "error"]);
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
+  LOG_LEVEL: logLevelSchema.optional(),
+  LOG_PRETTY: z
+    .string()
+    .optional()
+    .transform((value) => value === "true"),
   PORT: z.coerce.number().int().positive().default(3000),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
   GITHUB_TOKEN: z.string().optional(),

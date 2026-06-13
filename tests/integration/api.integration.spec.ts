@@ -301,7 +301,29 @@ describe("API integration", () => {
       expect(response.statusCode).toBe(200);
       expect(response.body).toContain("http_requests_total");
       expect(response.body).toContain("http_request_duration_seconds");
+      expect(response.body).toContain("http_request_errors_total");
       expect(response.body).toContain('route="/api/subscriptions"');
+    });
+
+    it("does not count /metrics scrapes in http_requests_total", async () => {
+      const response = await metricsRequest(ctx);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).not.toMatch(/http_requests_total\{[^}]*route="\/metrics"/);
+    });
+
+    it("records http_request_errors_total for 5xx responses", async () => {
+      ctx.sourceControlClient.mode = "rate-limit";
+
+      const errorResponse = await subscribe(ctx);
+      expect(errorResponse.statusCode).toBe(503);
+
+      const metricsResponse = await metricsRequest(ctx);
+
+      expect(metricsResponse.statusCode).toBe(200);
+      expect(metricsResponse.body).toContain(
+        'http_request_errors_total{method="POST",route="/api/subscribe",status_code="503"}',
+      );
     });
   });
 });

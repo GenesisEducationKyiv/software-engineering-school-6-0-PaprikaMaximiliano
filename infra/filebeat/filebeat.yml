@@ -1,0 +1,32 @@
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: false
+      templates:
+        - condition:
+            equals:
+              docker.container.labels.com.docker.compose.service: app
+          config:
+            - type: container
+              paths:
+                - /var/lib/docker/containers/${data.docker.container.id}/*.log
+              processors:
+                - add_docker_metadata: ~
+
+processors:
+  - decode_json_fields:
+      fields: ["message"]
+      target: ""
+      overwrite_keys: true
+      add_error_key: true
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  index: "logs-repo-release-notifier-%{+yyyy.MM.dd}"
+
+setup.template.name: "logs-repo-release-notifier"
+setup.template.pattern: "logs-repo-release-notifier-*"
+setup.ilm.enabled: false
+
+logging.level: info
+logging.to_stderr: true

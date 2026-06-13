@@ -1,3 +1,4 @@
+import type { FastifyServerOptions } from "fastify";
 import type { IMailer } from "../integrations/ports/IMailer";
 import type { ISourceControlClient } from "../integrations/ports/ISourceControlClient";
 import type { IRepositoryRepository } from "../repositories/IRepositoryRepository";
@@ -9,6 +10,7 @@ export interface BuildAppOptions {
   appBaseUrl?: string;
   enableScanner?: boolean;
   githubClient?: ISourceControlClient;
+  logger?: FastifyServerOptions["logger"];
   mailer?: IMailer;
   repositoryRepository?: IRepositoryRepository;
   subscriptionRepository?: ISubscriptionRepository;
