@@ -2,7 +2,10 @@ import "dotenv/config";
 import Fastify from "fastify";
 import { ReleaseScannerService } from "../../modules/release-scanner/application/ReleaseScannerService";
 import { GitHubClient } from "../../platform/integrations/GithubClient";
-import { Mailer } from "../../platform/integrations/Mailer";
+import {
+  BullMqNotificationPublisher,
+  createNotificationQueue,
+} from "../../platform/messaging/bullmq/BullMqNotificationPublisher";
 import { createLogger } from "../../platform/logger/createLogger";
 import { scannerEnv } from "./config";
 import { HttpRepositoryStateUpdater } from "./infrastructure/HttpRepositoryStateUpdater";
@@ -20,15 +23,13 @@ const subscriptionApiClient = new SubscriptionApiClient(
   scannerEnv.INTERNAL_API_KEY,
 );
 
+const notificationPublisher = new BullMqNotificationPublisher(
+  createNotificationQueue(scannerEnv.REDIS_URL),
+);
+
 const scanner = new ReleaseScannerService(
   new GitHubClient(scannerEnv.GITHUB_TOKEN),
-  new Mailer(scannerEnv.MAIL_FROM, {
-    host: scannerEnv.SMTP_HOST,
-    port: scannerEnv.SMTP_PORT,
-    secure: scannerEnv.SMTP_SECURE,
-    user: scannerEnv.SMTP_USER,
-    pass: scannerEnv.SMTP_PASS,
-  }),
+  notificationPublisher,
   scannerEnv.SCAN_INTERVAL_MS,
   logger,
   new HttpScanTargetProvider(subscriptionApiClient),

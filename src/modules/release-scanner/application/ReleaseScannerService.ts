@@ -1,26 +1,26 @@
-import type { IMailer } from "../../../platform/integrations/ports/IMailer";
 import type { ILogger } from "../../../platform/logger/ILogger";
+import type { INotificationPublisher } from "../../../platform/messaging/ports/INotificationPublisher";
 import type { ISourceControlClient } from "../../../platform/integrations/ports/ISourceControlClient";
 import { RateLimitPauser } from "../../../platform/scheduling/RateLimitPauser";
 import { ScheduledTask } from "../../../platform/scheduling/ScheduledTask";
 import type { RepositoryStateUpdater } from "../ports/RepositoryStateUpdater";
 import type { ScanTargetProvider } from "../ports/ScanTargetProvider";
 import { ReleaseDetector } from "./ReleaseDetector";
-import { ReleaseNotifier } from "./ReleaseNotifier";
+import { ReleaseNotificationPublisher } from "./ReleaseNotificationPublisher";
 
 export class ReleaseScannerService {
   private readonly scheduledTask: ScheduledTask;
 
   constructor(
     githubClient: ISourceControlClient,
-    mailer: IMailer,
+    notificationPublisher: INotificationPublisher,
     intervalMs: number,
     logger: ILogger,
     scanTargetProvider: ScanTargetProvider,
     stateUpdater: RepositoryStateUpdater,
   ) {
     const rateLimitPauser = new RateLimitPauser();
-    const notifier = new ReleaseNotifier(mailer, logger);
+    const notifier = new ReleaseNotificationPublisher(notificationPublisher, logger);
     const detector = new ReleaseDetector(
       githubClient,
       scanTargetProvider,

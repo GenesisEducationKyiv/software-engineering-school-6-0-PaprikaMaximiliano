@@ -14,15 +14,7 @@ const scannerEnvSchema = z.object({
     .string()
     .optional()
     .transform((value) => value === "true"),
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().int().positive().default(587),
-  SMTP_SECURE: z
-    .string()
-    .optional()
-    .transform((value) => value === "true"),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  MAIL_FROM: z.string().email().default("noreply@release-notifier.local"),
+  REDIS_URL: z.string().url().default("redis://localhost:6379"),
 });
 
 export const scannerEnv = scannerEnvSchema.parse(process.env);

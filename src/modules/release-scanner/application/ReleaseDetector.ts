@@ -5,14 +5,14 @@ import { RateLimitPauser } from "../../../platform/scheduling/RateLimitPauser";
 import type { ScanTarget } from "../../subscription/contracts/scannerContracts";
 import type { RepositoryStateUpdater } from "../ports/RepositoryStateUpdater";
 import type { ScanTargetProvider } from "../ports/ScanTargetProvider";
-import { ReleaseNotifier } from "./ReleaseNotifier";
+import type { ReleaseNotificationPublisher } from "./ReleaseNotificationPublisher";
 
 export class ReleaseDetector {
   constructor(
     private readonly githubClient: ISourceControlClient,
     private readonly scanTargetProvider: ScanTargetProvider,
     private readonly stateUpdater: RepositoryStateUpdater,
-    private readonly notifier: ReleaseNotifier,
+    private readonly notifier: ReleaseNotificationPublisher,
     private readonly rateLimitPauser: RateLimitPauser,
     private readonly logger: ILogger,
   ) {}
@@ -36,7 +36,7 @@ export class ReleaseDetector {
           );
           return;
         }
-
+        console.log(error);
         this.logger.error({ repository: target.fullName, error }, "failed to process repository");
       }
     }

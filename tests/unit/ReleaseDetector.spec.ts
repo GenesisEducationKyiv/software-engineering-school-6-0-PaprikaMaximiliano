@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ReleaseDetector } from "../src/modules/release-scanner/application/ReleaseDetector";
-import { ISourceControlClient } from "../src/platform/integrations/ports/ISourceControlClient";
-import { ReleaseNotifier } from "../src/modules/release-scanner/application/ReleaseNotifier";
-import { RateLimitPauser } from "../src/platform/scheduling/RateLimitPauser";
-import { ILogger } from "../src/platform/logger/ILogger";
-import { OptimisticLockError } from "../src/platform/errors";
-import type { ScanTarget } from "../src/modules/subscription/contracts/scannerContracts";
-import type { ScanTargetProvider } from "../src/modules/release-scanner/ports/ScanTargetProvider";
-import type { RepositoryStateUpdater } from "../src/modules/release-scanner/ports/RepositoryStateUpdater";
+import { ReleaseDetector } from "@/modules/release-scanner/application/ReleaseDetector";
+import { ISourceControlClient } from "@/platform/integrations/ports/ISourceControlClient";
+import { ReleaseNotificationPublisher } from "@/modules/release-scanner/application/ReleaseNotificationPublisher";
+import { RateLimitPauser } from "@/platform/scheduling/RateLimitPauser";
+import { ILogger } from "@/platform/logger/ILogger";
+import { OptimisticLockError } from "@/platform/errors";
+import type { ScanTarget } from "@/modules/subscription/contracts/scannerContracts";
+import type { ScanTargetProvider } from "@/modules/release-scanner/ports/ScanTargetProvider";
+import type { RepositoryStateUpdater } from "@/modules/release-scanner/ports/RepositoryStateUpdater";
 
 describe("ReleaseDetector", () => {
   const mockGithubClient = {
@@ -24,7 +24,7 @@ describe("ReleaseDetector", () => {
 
   const mockNotifier = {
     notifySubscribers: vi.fn(),
-  } as unknown as ReleaseNotifier;
+  } as unknown as ReleaseNotificationPublisher;
 
   const mockRateLimitPauser = {
     isPaused: vi.fn(),

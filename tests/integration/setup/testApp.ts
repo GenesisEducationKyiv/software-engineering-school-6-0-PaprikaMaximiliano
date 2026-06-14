@@ -4,9 +4,11 @@ import { API_KEY, APP_BASE_URL } from "../constants";
 import { DeterministicTokenGenerator } from "../fakes/DeterministicTokenGenerator";
 import { FakeSourceControlClient } from "../fakes/FakeSourceControlClient";
 import { RecordingMailer } from "../fakes/RecordingMailer";
+import { SyncNotificationPublisher } from "../fakes/SyncNotificationPublisher";
 
 export function createIntegrationTestContext() {
   const mailer = new RecordingMailer();
+  const notificationPublisher = new SyncNotificationPublisher(mailer);
   const tokenGenerator = new DeterministicTokenGenerator();
   const sourceControlClient = new FakeSourceControlClient();
 
@@ -14,7 +16,7 @@ export function createIntegrationTestContext() {
     apiKey: API_KEY,
     appBaseUrl: APP_BASE_URL,
     logger: false,
-    mailer,
+    notificationPublisher,
     githubClient: sourceControlClient,
     tokenGenerator,
   });

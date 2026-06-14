@@ -1,13 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
-import { OptimisticLockError } from "../src/platform/errors";
-import { HttpRepositoryStateUpdater } from "../src/services/release-scanner/infrastructure/HttpRepositoryStateUpdater";
-import { HttpScanTargetProvider } from "../src/services/release-scanner/infrastructure/HttpScanTargetProvider";
-import { SubscriptionApiClient } from "../src/services/release-scanner/infrastructure/SubscriptionApiClient";
+import { OptimisticLockError } from "@/platform/errors";
+import { HttpRepositoryStateUpdater } from "@/services/release-scanner/infrastructure/HttpRepositoryStateUpdater";
+import { HttpScanTargetProvider } from "@/services/release-scanner/infrastructure/HttpScanTargetProvider";
+import { SubscriptionApiClient } from "@/services/release-scanner/infrastructure/SubscriptionApiClient";
 
 const repositoryId = "11111111-1111-1111-1111-111111111111";
 
 function createMockFetch(response: Partial<Response>): typeof fetch {
-  return vi.fn().mockResolvedValue(response) as unknown as typeof fetch;
+  return vi.fn().mockResolvedValue({
+    text: () => Promise.resolve(""),
+    ...response,
+  }) as unknown as typeof fetch;
 }
 
 describe("SubscriptionApiClient adapters", () => {

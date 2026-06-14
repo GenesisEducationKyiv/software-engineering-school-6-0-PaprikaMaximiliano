@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { ScheduledTask } from "../src/platform/scheduling/ScheduledTask";
-import { ILogger } from "../src/platform/logger/ILogger";
+import { ScheduledTask } from "@/platform/scheduling/ScheduledTask";
+import { ILogger } from "@/platform/logger/ILogger";
 
 describe("ScheduledTask", () => {
   const mockLogger = {

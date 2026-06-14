@@ -1,7 +1,10 @@
 import { env } from "../platform/config";
 import { GitHubClient } from "../platform/integrations/GithubClient";
-import { Mailer } from "../platform/integrations/Mailer";
-import type { IMailer } from "../platform/integrations/ports/IMailer";
+import {
+  BullMqNotificationPublisher,
+  createNotificationQueue,
+} from "../platform/messaging/bullmq/BullMqNotificationPublisher";
+import type { INotificationPublisher } from "../platform/messaging/ports/INotificationPublisher";
 import type { ISourceControlClient } from "../platform/integrations/ports/ISourceControlClient";
 import { createSubscriptionApiPlugin } from "../modules/subscription/api/subscriptionApiPlugin";
 import { ScannerAccessService } from "../modules/subscription/application/ScannerAccessService";
@@ -15,7 +18,7 @@ import type { BuildAppOptions } from "./buildAppOptions";
 
 export type SubscriptionModule = {
   githubClient: ISourceControlClient;
-  mailer: IMailer;
+  notificationPublisher: INotificationPublisher;
   appBaseUrl: string;
   subscriptionService: SubscriptionService;
   scannerAccessService: ScannerAccessService;
@@ -24,15 +27,9 @@ export type SubscriptionModule = {
 
 export function createSubscriptionModule(options: BuildAppOptions): SubscriptionModule {
   const githubClient = options.githubClient ?? new GitHubClient(env.GITHUB_TOKEN);
-  const mailer =
-    options.mailer ??
-    new Mailer(env.MAIL_FROM, {
-      host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: env.SMTP_SECURE,
-      user: env.SMTP_USER,
-      pass: env.SMTP_PASS,
-    });
+  const notificationPublisher =
+    options.notificationPublisher ??
+    new BullMqNotificationPublisher(createNotificationQueue(env.REDIS_URL));
   const subscriptionRepository = options.subscriptionRepository ?? new SubscriptionRepository();
   const repositoryRepository = options.repositoryRepository ?? new RepositoryRepository();
   const tokenGenerator = options.tokenGenerator ?? new UUIDTokenGenerator();
@@ -41,7 +38,7 @@ export function createSubscriptionModule(options: BuildAppOptions): Subscription
 
   const subscriptionService = new SubscriptionService(
     subscriptionRepository,
-    mailer,
+    notificationPublisher,
     tokenGenerator,
     urlBuilder,
     new RepoValidator(githubClient),
@@ -52,7 +49,7 @@ export function createSubscriptionModule(options: BuildAppOptions): Subscription
 
   return {
     githubClient,
-    mailer,
+    notificationPublisher,
     appBaseUrl,
     subscriptionService,
     scannerAccessService,

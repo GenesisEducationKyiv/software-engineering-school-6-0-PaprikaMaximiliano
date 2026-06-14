@@ -1,16 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SubscriptionService } from "../src/modules/subscription/application/SubscriptionService";
-import { ISubscriptionRepository } from "../src/modules/subscription/domain/ports/ISubscriptionRepository";
-import { IMailer } from "../src/platform/integrations/ports/IMailer";
-import { ITokenGenerator } from "../src/modules/subscription/domain/ports/ITokenGenerator";
-import { SubscriptionUrlBuilder } from "../src/modules/subscription/domain/UrlBuilder";
-import { RepoValidator } from "../src/modules/subscription/domain/RepoValidator";
-import { SubscriptionAlreadyExistsError } from "../src/modules/subscription/domain/errors/SubscriptionAlreadyExistsError";
-import { SubscriptionConflictError, ResourceNotFoundError } from "../src/platform/errors";
-import {
-  Subscription,
-  SubscriptionWithRepository,
-} from "../src/modules/subscription/domain/models";
+import { SubscriptionService } from "@/modules/subscription/application/SubscriptionService";
+import { ISubscriptionRepository } from "@/modules/subscription/domain/ports/ISubscriptionRepository";
+import { INotificationPublisher } from "@/platform/messaging/ports/INotificationPublisher";
+import { ITokenGenerator } from "@/modules/subscription/domain/ports/ITokenGenerator";
+import { SubscriptionUrlBuilder } from "@/modules/subscription/domain/UrlBuilder";
+import { RepoValidator } from "@/modules/subscription/domain/RepoValidator";
+import { SubscriptionAlreadyExistsError } from "@/modules/subscription/domain/errors/SubscriptionAlreadyExistsError";
+import { SubscriptionConflictError, ResourceNotFoundError } from "@/platform/errors";
+import { Subscription, SubscriptionWithRepository } from "@/modules/subscription/domain/models";
 
 describe("SubscriptionService", () => {
   const mockRepo = {
@@ -21,9 +18,10 @@ describe("SubscriptionService", () => {
     getAllByEmail: vi.fn(),
   } as unknown as ISubscriptionRepository;
 
-  const mockMailer = {
-    sendConfirmationEmail: vi.fn(),
-  } as unknown as IMailer;
+  const mockPublisher = {
+    publishNotifyNewRelease: vi.fn(),
+    publishSendConfirmation: vi.fn(),
+  } as unknown as INotificationPublisher;
 
   const mockTokenGen = {
     generate: vi.fn(),
@@ -44,7 +42,7 @@ describe("SubscriptionService", () => {
     vi.clearAllMocks();
     service = new SubscriptionService(
       mockRepo,
-      mockMailer,
+      mockPublisher,
       mockTokenGen,
       mockUrlBuilder,
       mockValidator,
@@ -54,7 +52,7 @@ describe("SubscriptionService", () => {
   describe("subscribe", () => {
     const input = { email: "test@example.com", repo: "owner/repo" };
 
-    it("should create a subscription and send an email", async () => {
+    it("should create a subscription and enqueue a confirmation notification", async () => {
       vi.mocked(mockValidator.validateAndGetLatestTag).mockResolvedValue("v1.0.0");
       vi.mocked(mockTokenGen.generate)
         .mockReturnValueOnce("token-confirm")
@@ -81,7 +79,7 @@ describe("SubscriptionService", () => {
         }),
       );
 
-      expect(mockMailer.sendConfirmationEmail).toHaveBeenCalledWith({
+      expect(mockPublisher.publishSendConfirmation).toHaveBeenCalledWith({
         to: input.email,
         repo: input.repo,
         confirmUrl: "http://confirm",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractProvidedApiKey, isAuthorizedApiKey } from "../src/platform/http/apiKey";
+import { extractProvidedApiKey, isAuthorizedApiKey } from "@/platform/http/apiKey";
 
 describe("extractProvidedApiKey", () => {
   it("reads token from x-api-key header", () => {

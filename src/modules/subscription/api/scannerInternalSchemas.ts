@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 
 export const repositoryIdParamSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1),
 });
 
 export const updateLastSeenTagBodySchema = z.object({

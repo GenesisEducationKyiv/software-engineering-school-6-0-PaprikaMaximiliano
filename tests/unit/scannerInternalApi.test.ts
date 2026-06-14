@@ -1,10 +1,10 @@
 import Fastify from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { OptimisticLockError } from "../src/platform/errors";
-import { errorHandler } from "../src/platform/http/errorHandler";
-import { createScannerInternalPlugin } from "../src/modules/subscription/api/scannerInternalPlugin";
-import type { ScannerAccessService } from "../src/modules/subscription/application/ScannerAccessService";
+import { OptimisticLockError } from "@/platform/errors";
+import { errorHandler } from "@/platform/http/errorHandler";
+import { createScannerInternalPlugin } from "@/modules/subscription/api/scannerInternalPlugin";
+import type { ScannerAccessService } from "@/modules/subscription/application/ScannerAccessService";
 
 const INTERNAL_API_KEY = "internal-test-key";
 
@@ -26,7 +26,7 @@ function createTestApp(
 }
 
 describe("scanner internal API", () => {
-  const repositoryId = "550e8400-e29b-41d4-a716-446655440000";
+  const repositoryId = "clp9k3x2z0000qj8x00000000";
 
   const mockService = {
     listScanTargets: vi.fn(),
