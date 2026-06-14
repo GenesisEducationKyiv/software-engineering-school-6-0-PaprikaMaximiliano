@@ -20,6 +20,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/release_notifier?schema=public
       NODE_ENV: production
@@ -28,11 +30,7 @@ services:
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_PRETTY: "false"
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_SECURE: ${SMTP_SECURE:-false}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASS: ${SMTP_PASS:-}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
       API_KEY: ${API_KEY:-}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required}
@@ -56,6 +54,8 @@ services:
     depends_on:
       app:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       SUBSCRIPTION_API_URL: http://app:3000
@@ -65,12 +65,7 @@ services:
       HEALTH_PORT: 3002
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_PRETTY: "false"
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_SECURE: ${SMTP_SECURE:-false}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASS: ${SMTP_PASS:-}
-      MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     command: npm run start:scanner
     healthcheck:
       test:
@@ -79,6 +74,47 @@ services:
           "node",
           "-e",
           "fetch('http://127.0.0.1:3002/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  notification:
+    build: .
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      HEALTH_PORT: 3003
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_PRETTY: "false"
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
+    command: npm run start:notification
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3003/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
         ]
       interval: 10s
       timeout: 5s
