@@ -26,7 +26,7 @@ function createTestApp(
 }
 
 describe("scanner internal API", () => {
-  const repositoryId = "550e8400-e29b-41d4-a716-446655440000";
+  const repositoryId = "clp9k3x2z0000qj8x00000000";
 
   const mockService = {
     listScanTargets: vi.fn(),

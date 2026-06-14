@@ -7,7 +7,10 @@ import { SubscriptionApiClient } from "@/services/release-scanner/infrastructure
 const repositoryId = "11111111-1111-1111-1111-111111111111";
 
 function createMockFetch(response: Partial<Response>): typeof fetch {
-  return vi.fn().mockResolvedValue(response) as unknown as typeof fetch;
+  return vi.fn().mockResolvedValue({
+    text: () => Promise.resolve(""),
+    ...response,
+  }) as unknown as typeof fetch;
 }
 
 describe("SubscriptionApiClient adapters", () => {
