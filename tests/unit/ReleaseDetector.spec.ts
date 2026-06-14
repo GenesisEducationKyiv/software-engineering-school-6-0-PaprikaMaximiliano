@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ReleaseDetector } from "@/modules/release-scanner/application/ReleaseDetector";
 import { ISourceControlClient } from "@/platform/integrations/ports/ISourceControlClient";
-import { ReleaseNotifier } from "@/modules/release-scanner/application/ReleaseNotifier";
+import { ReleaseNotificationPublisher } from "@/modules/release-scanner/application/ReleaseNotificationPublisher";
 import { RateLimitPauser } from "@/platform/scheduling/RateLimitPauser";
 import { ILogger } from "@/platform/logger/ILogger";
 import { OptimisticLockError } from "@/platform/errors";
@@ -24,7 +24,7 @@ describe("ReleaseDetector", () => {
 
   const mockNotifier = {
     notifySubscribers: vi.fn(),
-  } as unknown as ReleaseNotifier;
+  } as unknown as ReleaseNotificationPublisher;
 
   const mockRateLimitPauser = {
     isPaused: vi.fn(),
