@@ -1,6 +1,6 @@
 import type { SubscribeInput, SubscriptionResponse } from "../api/types";
-import type { IMailer } from "../../../platform/integrations/ports/IMailer";
 import { ResourceNotFoundError, SubscriptionConflictError } from "../../../platform/errors";
+import type { INotificationPublisher } from "../../../platform/messaging/ports/INotificationPublisher";
 import { SubscriptionAlreadyExistsError } from "../domain/errors/SubscriptionAlreadyExistsError";
 import { RepoValidator } from "../domain/RepoValidator";
 import { SubscriptionMapper } from "../domain/SubscriptionMapper";
@@ -11,7 +11,7 @@ import { SubscriptionUrlBuilder } from "../domain/UrlBuilder";
 export class SubscriptionService {
   constructor(
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly mailer: IMailer,
+    private readonly notificationPublisher: INotificationPublisher,
     private readonly tokenGenerator: ITokenGenerator,
     private readonly urlBuilder: SubscriptionUrlBuilder,
     private readonly repoValidator: RepoValidator,
@@ -35,7 +35,7 @@ export class SubscriptionService {
         unsubscribeToken,
       });
 
-      await this.mailer.sendConfirmationEmail({
+      await this.notificationPublisher.publishSendConfirmation({
         to: createdSubscription.email,
         repo: input.repo,
         confirmUrl: this.urlBuilder.buildConfirmUrl(createdSubscription.confirmationToken),
