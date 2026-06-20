@@ -16,6 +16,7 @@ export const sendConfirmationDataSchema = z.object({
   repo: z.string().min(1),
   confirmUrl: z.string().url(),
   unsubscribeUrl: z.string().url(),
+  sagaId: z.string().min(1).optional(),
 });
 
 export type NotifyNewReleasePayload = z.infer<typeof notifyNewReleaseDataSchema>;

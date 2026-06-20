@@ -45,5 +45,9 @@ export async function buildApp(options: BuildAppOptions = {}) {
     },
   );
 
+  app.addHook("onClose", async () => {
+    await subscriptionModule.close();
+  });
+
   return app;
 }

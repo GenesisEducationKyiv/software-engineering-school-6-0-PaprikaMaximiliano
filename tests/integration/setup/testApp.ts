@@ -5,10 +5,12 @@ import { DeterministicTokenGenerator } from "../fakes/DeterministicTokenGenerato
 import { FakeSourceControlClient } from "../fakes/FakeSourceControlClient";
 import { RecordingMailer } from "../fakes/RecordingMailer";
 import { SyncNotificationPublisher } from "../fakes/SyncNotificationPublisher";
+import { SyncSagaNotificationParticipant } from "../fakes/SyncSagaNotificationParticipant";
 
 export function createIntegrationTestContext() {
   const mailer = new RecordingMailer();
   const notificationPublisher = new SyncNotificationPublisher(mailer);
+  const sagaNotificationParticipant = new SyncSagaNotificationParticipant(notificationPublisher);
   const tokenGenerator = new DeterministicTokenGenerator();
   const sourceControlClient = new FakeSourceControlClient();
 
@@ -17,6 +19,7 @@ export function createIntegrationTestContext() {
     appBaseUrl: APP_BASE_URL,
     logger: false,
     notificationPublisher,
+    sagaNotificationParticipant,
     githubClient: sourceControlClient,
     tokenGenerator,
   });
@@ -29,6 +32,7 @@ export function createIntegrationTestContext() {
     async reset() {
       await prisma.subscription.deleteMany();
       await prisma.repository.deleteMany();
+      await prisma.sagaInstance.deleteMany();
       mailer.reset();
       tokenGenerator.reset();
       sourceControlClient.reset();

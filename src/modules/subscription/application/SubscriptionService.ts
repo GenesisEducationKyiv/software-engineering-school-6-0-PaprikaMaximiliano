@@ -1,52 +1,20 @@
 import type { SubscribeInput, SubscriptionResponse } from "../api/types";
-import { ResourceNotFoundError, SubscriptionConflictError } from "../../../platform/errors";
-import type { INotificationPublisher } from "../../../platform/messaging/ports/INotificationPublisher";
-import { SubscriptionAlreadyExistsError } from "../domain/errors/SubscriptionAlreadyExistsError";
+import { ResourceNotFoundError } from "../../../platform/errors";
 import { RepoValidator } from "../domain/RepoValidator";
 import { SubscriptionMapper } from "../domain/SubscriptionMapper";
 import type { ISubscriptionRepository } from "../domain/ports/ISubscriptionRepository";
-import type { ITokenGenerator } from "../domain/ports/ITokenGenerator";
-import { SubscriptionUrlBuilder } from "../domain/UrlBuilder";
+import type { SubscribeSagaOrchestrator } from "./sagas/SubscribeSagaOrchestrator";
 
 export class SubscriptionService {
   constructor(
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly notificationPublisher: INotificationPublisher,
-    private readonly tokenGenerator: ITokenGenerator,
-    private readonly urlBuilder: SubscriptionUrlBuilder,
+    private readonly subscribeSagaOrchestrator: SubscribeSagaOrchestrator,
     private readonly repoValidator: RepoValidator,
   ) {}
 
   async subscribe(input: SubscribeInput): Promise<void> {
     const latestTag = await this.repoValidator.validateAndGetLatestTag(input.repo);
-
-    const [owner, name] = input.repo.split("/");
-    const confirmationToken = this.tokenGenerator.generate();
-    const unsubscribeToken = this.tokenGenerator.generate();
-
-    try {
-      const createdSubscription = await this.subscriptionRepository.create({
-        email: input.email,
-        repo: input.repo,
-        owner,
-        name,
-        latestTag,
-        confirmationToken,
-        unsubscribeToken,
-      });
-
-      await this.notificationPublisher.publishSendConfirmation({
-        to: createdSubscription.email,
-        repo: input.repo,
-        confirmUrl: this.urlBuilder.buildConfirmUrl(createdSubscription.confirmationToken),
-        unsubscribeUrl: this.urlBuilder.buildUnsubscribeUrl(createdSubscription.unsubscribeToken),
-      });
-    } catch (error) {
-      if (error instanceof SubscriptionAlreadyExistsError) {
-        throw new SubscriptionConflictError("Email already subscribed to this repository");
-      }
-      throw error;
-    }
+    await this.subscribeSagaOrchestrator.execute(input, latestTag);
   }
 
   async confirm(token: string): Promise<void> {

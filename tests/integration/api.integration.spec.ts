@@ -113,6 +113,25 @@ describe("API integration", () => {
       });
     });
 
+    it("compensates subscription when confirmation email fails", async () => {
+      ctx.mailer.failNextConfirmation = true;
+
+      const response = await subscribe(ctx);
+
+      expect(response.statusCode).toBe(503);
+      expect(parseJsonBody(response)).toEqual({
+        message: "Failed to complete subscription. Please try again later.",
+      });
+      expect(ctx.mailer.confirmationEmails).toHaveLength(0);
+
+      const listResponse = await apiRequest(ctx, {
+        method: "GET",
+        url: `/api/subscriptions?email=${encodeURIComponent(TEST_EMAIL)}`,
+      });
+
+      expect(parseJsonBody(listResponse)).toEqual([]);
+    });
+
     it("returns 400 for invalid subscribe body", async () => {
       const response = await apiRequest(ctx, {
         method: "POST",

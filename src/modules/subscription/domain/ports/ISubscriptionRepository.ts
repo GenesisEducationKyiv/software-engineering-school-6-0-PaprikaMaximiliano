@@ -15,5 +15,6 @@ export interface ISubscriptionRepository {
   getByConfirmationToken(token: string): Promise<Subscription | null>;
   confirmById(id: string): Promise<Subscription>;
   deleteByUnsubscribeToken(token: string): Promise<void>;
+  deleteById(id: string): Promise<void>;
   getAllByEmail(email: string): Promise<SubscriptionWithRepository[]>;
 }

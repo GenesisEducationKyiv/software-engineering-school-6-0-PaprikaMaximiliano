@@ -1,6 +1,8 @@
 import type { IMailer } from "../../../src/platform/integrations/ports/IMailer";
 
 export class RecordingMailer implements IMailer {
+  failNextConfirmation = false;
+
   confirmationEmails: Array<{
     to: string;
     repo: string;
@@ -21,6 +23,11 @@ export class RecordingMailer implements IMailer {
     confirmUrl: string;
     unsubscribeUrl: string;
   }): Promise<void> {
+    if (this.failNextConfirmation) {
+      this.failNextConfirmation = false;
+      throw new Error("Simulated confirmation email failure");
+    }
+
     this.confirmationEmails.push(input);
     return Promise.resolve();
   }
@@ -36,6 +43,7 @@ export class RecordingMailer implements IMailer {
   }
 
   reset(): void {
+    this.failNextConfirmation = false;
     this.confirmationEmails = [];
     this.releaseEmails = [];
   }

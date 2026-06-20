@@ -41,3 +41,11 @@ export class GitHubNotFoundError extends Error {
     this.name = "GitHubNotFoundError";
   }
 }
+
+export class SagaExecutionError extends AppError {
+  readonly statusCode = 503;
+
+  constructor(message = "Saga execution failed") {
+    super(message);
+  }
+}
