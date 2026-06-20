@@ -32,3 +32,14 @@ model Subscription {
   @@unique([email, repositoryId])
   @@index([email])
 }
+
+model SagaInstance {
+  id             String   @id @default(cuid())
+  type           String
+  status         String
+  currentStep    String?
+  payload        Json
+  completedSteps Json     @default("[]")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
