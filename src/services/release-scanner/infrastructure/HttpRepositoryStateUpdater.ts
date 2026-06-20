@@ -24,7 +24,9 @@ export class HttpRepositoryStateUpdater implements RepositoryStateUpdater {
 
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(`Failed to update last seen tag: ${response.status}${body ? ` — ${body}` : ""}`);
+      throw new Error(
+        `Failed to update last seen tag: ${response.status}${body ? ` — ${body}` : ""}`,
+      );
     }
   }
 }
