@@ -115,6 +115,20 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     }
   }
 
+  async deleteById(id: string): Promise<void> {
+    try {
+      await prisma.subscription.delete({
+        where: { id },
+      });
+    } catch (error) {
+      if (isPrismaNotFoundError(error)) {
+        throw new ResourceNotFoundError("Subscription not found");
+      }
+
+      throw error;
+    }
+  }
+
   async getAllByEmail(email: string): Promise<SubscriptionWithRepository[]> {
     const subscriptions = await prisma.subscription.findMany({
       where: { email },

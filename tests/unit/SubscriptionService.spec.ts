@@ -1,12 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SubscriptionService } from "@/modules/subscription/application/SubscriptionService";
 import { ISubscriptionRepository } from "@/modules/subscription/domain/ports/ISubscriptionRepository";
-import { INotificationPublisher } from "@/platform/messaging/ports/INotificationPublisher";
-import { ITokenGenerator } from "@/modules/subscription/domain/ports/ITokenGenerator";
-import { SubscriptionUrlBuilder } from "@/modules/subscription/domain/UrlBuilder";
+import { SubscribeSagaOrchestrator } from "@/modules/subscription/application/sagas/SubscribeSagaOrchestrator";
 import { RepoValidator } from "@/modules/subscription/domain/RepoValidator";
-import { SubscriptionAlreadyExistsError } from "@/modules/subscription/domain/errors/SubscriptionAlreadyExistsError";
-import { SubscriptionConflictError, ResourceNotFoundError } from "@/platform/errors";
+import { ResourceNotFoundError } from "@/platform/errors";
 import { Subscription, SubscriptionWithRepository } from "@/modules/subscription/domain/models";
 
 describe("SubscriptionService", () => {
@@ -15,22 +12,13 @@ describe("SubscriptionService", () => {
     getByConfirmationToken: vi.fn(),
     confirmById: vi.fn(),
     deleteByUnsubscribeToken: vi.fn(),
+    deleteById: vi.fn(),
     getAllByEmail: vi.fn(),
   } as unknown as ISubscriptionRepository;
 
-  const mockPublisher = {
-    publishNotifyNewRelease: vi.fn(),
-    publishSendConfirmation: vi.fn(),
-  } as unknown as INotificationPublisher;
-
-  const mockTokenGen = {
-    generate: vi.fn(),
-  } as unknown as ITokenGenerator;
-
-  const mockUrlBuilder = {
-    buildConfirmUrl: vi.fn(),
-    buildUnsubscribeUrl: vi.fn(),
-  } as unknown as SubscriptionUrlBuilder;
+  const mockSubscribeSagaOrchestrator = {
+    execute: vi.fn(),
+  } as unknown as SubscribeSagaOrchestrator;
 
   const mockValidator = {
     validateAndGetLatestTag: vi.fn(),
@@ -40,58 +28,19 @@ describe("SubscriptionService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new SubscriptionService(
-      mockRepo,
-      mockPublisher,
-      mockTokenGen,
-      mockUrlBuilder,
-      mockValidator,
-    );
+    service = new SubscriptionService(mockRepo, mockSubscribeSagaOrchestrator, mockValidator);
   });
 
   describe("subscribe", () => {
     const input = { email: "test@example.com", repo: "owner/repo" };
 
-    it("should create a subscription and enqueue a confirmation notification", async () => {
+    it("validates repo and delegates to subscribe saga orchestrator", async () => {
       vi.mocked(mockValidator.validateAndGetLatestTag).mockResolvedValue("v1.0.0");
-      vi.mocked(mockTokenGen.generate)
-        .mockReturnValueOnce("token-confirm")
-        .mockReturnValueOnce("token-unsub");
-
-      const createdSub = {
-        email: input.email,
-        confirmationToken: "token-confirm",
-        unsubscribeToken: "token-unsub",
-      } as Subscription;
-
-      vi.mocked(mockRepo.create).mockResolvedValue(createdSub);
-      vi.mocked(mockUrlBuilder.buildConfirmUrl).mockReturnValue("http://confirm");
-      vi.mocked(mockUrlBuilder.buildUnsubscribeUrl).mockReturnValue("http://unsub");
 
       await service.subscribe(input);
 
-      expect(mockRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          owner: "owner",
-          name: "repo",
-          latestTag: "v1.0.0",
-          confirmationToken: "token-confirm",
-        }),
-      );
-
-      expect(mockPublisher.publishSendConfirmation).toHaveBeenCalledWith({
-        to: input.email,
-        repo: input.repo,
-        confirmUrl: "http://confirm",
-        unsubscribeUrl: "http://unsub",
-      });
-    });
-
-    it("should throw SubscriptionConflictError if repository throws already exists", async () => {
-      vi.mocked(mockValidator.validateAndGetLatestTag).mockResolvedValue("v1.0.0");
-      vi.mocked(mockRepo.create).mockRejectedValue(new SubscriptionAlreadyExistsError());
-
-      await expect(service.subscribe(input)).rejects.toThrow(SubscriptionConflictError);
+      expect(mockValidator.validateAndGetLatestTag).toHaveBeenCalledWith("owner/repo");
+      expect(mockSubscribeSagaOrchestrator.execute).toHaveBeenCalledWith(input, "v1.0.0");
     });
   });
 
