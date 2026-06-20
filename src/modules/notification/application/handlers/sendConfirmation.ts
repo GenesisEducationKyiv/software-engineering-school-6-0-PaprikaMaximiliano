@@ -8,5 +8,5 @@ export async function handleSendConfirmation(
   data: SendConfirmationPayload,
 ): Promise<void> {
   await mailer.sendConfirmationEmail(data);
-  logger.info({ to: data.to, repo: data.repo }, "confirmation email sent");
+  logger.info({ to: data.to, repo: data.repo, sagaId: data.sagaId }, "confirmation email sent");
 }
