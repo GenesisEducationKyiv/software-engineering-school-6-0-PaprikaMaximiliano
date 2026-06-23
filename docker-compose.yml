@@ -34,8 +34,11 @@ services:
       MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
       API_KEY: ${API_KEY:-}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required}
+      GRPC_PORT: ${GRPC_PORT:-50051}
+      GRPC_ENABLED: "true"
     ports:
       - "3000:3000"
+      - "50051:50051"
     healthcheck:
       test:
         [
@@ -59,6 +62,8 @@ services:
     environment:
       NODE_ENV: production
       SUBSCRIPTION_API_URL: http://app:3000
+      SUBSCRIPTION_API_GRPC_URL: app:50051
+      SCANNER_TRANSPORT: ${SCANNER_TRANSPORT:-grpc}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       SCAN_INTERVAL_MS: ${SCAN_INTERVAL_MS:-60000}

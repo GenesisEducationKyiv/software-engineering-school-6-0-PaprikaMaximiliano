@@ -49,5 +49,5 @@ export async function buildApp(options: BuildAppOptions = {}) {
     await subscriptionModule.close();
   });
 
-  return app;
+  return { app, subscriptionModule };
 }

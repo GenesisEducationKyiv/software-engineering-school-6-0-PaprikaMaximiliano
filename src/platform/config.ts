@@ -39,6 +39,11 @@ const envSchema = z.object({
     const trimmed = value.trim();
     return trimmed.length === 0 ? undefined : trimmed;
   }, z.string().min(1).optional()),
+  GRPC_PORT: z.coerce.number().int().positive().default(50051),
+  GRPC_ENABLED: z
+    .string()
+    .optional()
+    .transform((value) => value !== "false"),
   REDIS_URL: z.string().url().default("redis://localhost:6379"),
 });
 export const env = envSchema.parse(process.env);

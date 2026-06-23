@@ -9,7 +9,7 @@ import vitest from "@vitest/eslint-plugin";
 
 export default defineConfig(
   {
-    ignores: ["dist/**"],
+    ignores: ["dist/**", "scripts/**", "src/gen/**"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
