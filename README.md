@@ -56,6 +56,60 @@ The release-scanner service calls `/internal/scanner/*` on the subscription API 
 |----------|---------|-------------|
 | `INTERNAL_API_KEY` | Both | Shared secret for service-to-service calls |
 | `SUBSCRIPTION_API_URL` | `release-scanner` | Base URL of the subscription API (e.g. `http://app:3000`) |
+| `SUBSCRIPTION_API_GRPC_URL` | `release-scanner` | gRPC address of the subscription API (e.g. `app:50051`) |
+| `SCANNER_TRANSPORT` | `release-scanner` | `grpc` (default) or `http` |
+| `GRPC_PORT` | `app` | gRPC server port (default `50051`) |
+| `GRPC_ENABLED` | `app` | Set to `false` to disable the gRPC server |
+
+## gRPC internal scanner API
+
+The release-scanner can call the subscription API over gRPC (default) or REST. Both implementations remain available.
+
+- **Contract**: [`proto/scanner/v1/scanner_access.proto`](proto/scanner/v1/scanner_access.proto)
+- **Buf**: `buf.yaml` at repo root — run `npm run buf:lint` and `npm run buf:generate`
+- **Server** (subscription API): `ScannerAccessService` on port `50051`
+- **Client** (release-scanner): `GrpcScanTargetProvider` / `GrpcRepositoryStateUpdater`
+
+### gRPC status codes
+
+| Condition | REST | gRPC |
+|-----------|------|------|
+| Missing/invalid API key | 401 | `UNAUTHENTICATED` |
+| Validation error | 400 | `INVALID_ARGUMENT` |
+| Optimistic lock conflict | 409 | `ABORTED` |
+| Internal API not configured | 503 | `UNAVAILABLE` |
+| Unexpected error | 500 | `INTERNAL` |
+
+Use REST transport locally:
+
+```bash
+SCANNER_TRANSPORT=http SUBSCRIPTION_API_URL=http://localhost:3000 INTERNAL_API_KEY=your-key npm run start:scanner
+```
+
+Use gRPC (default):
+
+```bash
+SUBSCRIPTION_API_GRPC_URL=localhost:50051 INTERNAL_API_KEY=your-key npm run start:scanner
+```
+
+## REST vs gRPC throughput
+
+Benchmark the `ListScanTargets` call with the stack running (`docker compose up -d --build`):
+
+```bash
+INTERNAL_API_KEY=your-key npm run benchmark:scanner-api
+```
+
+The script uses **autocannon** for REST and **ghz** for gRPC (install [ghz](https://github.com/bojand/ghz#install) separately).
+
+Example local results (50 connections, 10s, empty scan-target list):
+
+| Transport | Req/s | p99 latency |
+|-----------|-------|-------------|
+| REST | ~1433 | ~76 ms |
+| gRPC | ~1687 | ~45 ms |
+
+**Why results differ:** gRPC uses HTTP/2 and binary protobuf, which reduces per-request serialization overhead compared to JSON REST. On tiny payloads locally the gap is modest; under sustained load with connection reuse, gRPC typically shows higher throughput and lower tail latency. REST can be competitive for very small responses when HTTP keep-alive is warm and JSON parsing cost is negligible.
 
 ## Structured logging and ELK
 
