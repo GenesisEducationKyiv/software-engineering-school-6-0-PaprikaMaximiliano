@@ -23,6 +23,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint protobuf contracts
+        run: npm run buf:lint
+
+      - name: Generate gRPC TypeScript
+        run: npm run buf:generate
+
       - name: Generate Prisma client
         run: npm run prisma:generate
         env:
