@@ -22,7 +22,7 @@ export function createIntegrationTestContext() {
     sagaNotificationParticipant,
     githubClient: sourceControlClient,
     tokenGenerator,
-  });
+  }).then(({ app }) => app);
 
   return {
     mailer,
