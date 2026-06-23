@@ -10,6 +10,9 @@ import { createLogger } from "../../platform/logger/createLogger";
 import { scannerEnv } from "./config";
 import { HttpRepositoryStateUpdater } from "./infrastructure/HttpRepositoryStateUpdater";
 import { HttpScanTargetProvider } from "./infrastructure/HttpScanTargetProvider";
+import { GrpcRepositoryStateUpdater } from "./infrastructure/grpc/GrpcRepositoryStateUpdater";
+import { GrpcScanTargetProvider } from "./infrastructure/grpc/GrpcScanTargetProvider";
+import { GrpcSubscriptionApiClient } from "./infrastructure/grpc/GrpcSubscriptionApiClient";
 import { SubscriptionApiClient } from "./infrastructure/SubscriptionApiClient";
 
 const logger = createLogger({
@@ -23,6 +26,21 @@ const subscriptionApiClient = new SubscriptionApiClient(
   scannerEnv.INTERNAL_API_KEY,
 );
 
+const grpcSubscriptionApiClient = new GrpcSubscriptionApiClient(
+  scannerEnv.SUBSCRIPTION_API_GRPC_URL,
+  scannerEnv.INTERNAL_API_KEY,
+);
+
+const useGrpc = scannerEnv.SCANNER_TRANSPORT === "grpc";
+
+const scanTargetProvider = useGrpc
+  ? new GrpcScanTargetProvider(grpcSubscriptionApiClient)
+  : new HttpScanTargetProvider(subscriptionApiClient);
+
+const repositoryStateUpdater = useGrpc
+  ? new GrpcRepositoryStateUpdater(grpcSubscriptionApiClient)
+  : new HttpRepositoryStateUpdater(subscriptionApiClient);
+
 const notificationPublisher = new BullMqNotificationPublisher(
   createNotificationQueue(scannerEnv.REDIS_URL),
 );
@@ -32,8 +50,8 @@ const scanner = new ReleaseScannerService(
   notificationPublisher,
   scannerEnv.SCAN_INTERVAL_MS,
   logger,
-  new HttpScanTargetProvider(subscriptionApiClient),
-  new HttpRepositoryStateUpdater(subscriptionApiClient),
+  scanTargetProvider,
+  repositoryStateUpdater,
 );
 
 const healthApp = Fastify({ logger: false });
@@ -51,6 +69,9 @@ async function shutdown(signal: string): Promise<void> {
   logger.info({ signal }, "shutting down release scanner");
 
   scanner.stop();
+  if (useGrpc) {
+    grpcSubscriptionApiClient.close();
+  }
   await healthApp.close();
   process.exit(0);
 }
@@ -67,7 +88,11 @@ try {
   await healthApp.listen({ port: scannerEnv.HEALTH_PORT, host: "0.0.0.0" });
   scanner.start();
   logger.info(
-    { healthPort: scannerEnv.HEALTH_PORT, scanIntervalMs: scannerEnv.SCAN_INTERVAL_MS },
+    {
+      healthPort: scannerEnv.HEALTH_PORT,
+      scanIntervalMs: scannerEnv.SCAN_INTERVAL_MS,
+      transport: scannerEnv.SCANNER_TRANSPORT,
+    },
     "release scanner started",
   );
 } catch (error) {

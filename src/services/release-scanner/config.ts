@@ -5,6 +5,8 @@ const logLevelSchema = z.enum(["debug", "info", "warn", "error"]);
 
 const scannerEnvSchema = z.object({
   SUBSCRIPTION_API_URL: z.string().url(),
+  SUBSCRIPTION_API_GRPC_URL: z.string().min(1).default("localhost:50051"),
+  SCANNER_TRANSPORT: z.enum(["grpc", "http"]).default("grpc"),
   INTERNAL_API_KEY: z.string().min(1),
   GITHUB_TOKEN: z.string().optional(),
   SCAN_INTERVAL_MS: z.coerce.number().int().positive().default(60000),
