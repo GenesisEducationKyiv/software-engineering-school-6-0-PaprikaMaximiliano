@@ -21,16 +21,22 @@
     "test:unit": "vitest run tests/unit",
     "test:watch": "vitest",
     "test:integration:container": "vitest run tests/integration",
-    "test:integration": "docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test --remove-orphans"
+    "test:integration": "docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test --remove-orphans",
+    "buf:lint": "buf lint",
+    "buf:generate": "buf generate",
+    "prebuild": "buf generate",
+    "benchmark:scanner-api": "node scripts/benchmark-scanner-api.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@bufbuild/protobuf": "^2.2.3",
     "@elastic/ecs-pino-format": "^1.5.0",
     "@fastify/formbody": "^8.0.2",
     "@fastify/sensible": "^6.0.4",
+    "@grpc/grpc-js": "^1.13.4",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "bullmq": "^5.78.0",
@@ -44,7 +50,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.55.1",
     "@eslint/js": "^10.0.1",
+    "autocannon": "^8.0.0",
     "@types/node": "^25.5.2",
     "@types/nodemailer": "^7.0.2",
     "@vitest/eslint-plugin": "^1.6.17",
@@ -58,6 +66,7 @@
     "prettier": "3.8.3",
     "prisma": "^7.6.0",
     "tsx": "^4.21.0",
+    "ts-proto": "^2.2.0",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.58.1",
     "vitest": "^4.1.3"
