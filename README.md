@@ -6,7 +6,9 @@
 
 ## Architecture
 
-The system runs as two application services from the same codebase:
+See [`docs/architecture/overview.md`](docs/architecture/overview.md) for runtime topology, bounded contexts, and cross-service communication. Layer rules and enforced dependency constraints are documented in [`docs/architecture/layers.md`](docs/architecture/layers.md).
+
+The system runs as three application services from the same codebase:
 
 | Service | Container | Port | Role |
 |---------|-----------|------|------|
