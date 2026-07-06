@@ -1,4 +1,4 @@
-import type { SubscriptionResponse } from "../api/types";
+import type { SubscriptionResponse } from "../contracts/subscriptionContracts";
 import type { SubscriptionWithRepository } from "./models";
 
 export class SubscriptionMapper {

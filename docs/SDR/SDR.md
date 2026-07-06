@@ -29,10 +29,13 @@
 
 ## 3. High-level Architecture
 
-Система складається з двох сервісів додатку та спільної бази даних:
+Система складається з трьох сервісів додатку та спільної бази даних:
 
-- **Subscription API** (`app`) — публічне HTTP API (`/api/*`), внутрішнє API для сканера (`/internal/scanner/*`), доступ до PostgreSQL
-- **Release Scanner** (`release-scanner`) — фоновий воркер без доступу до БД; отримує цілі сканування та оновлює `lastSeenTag` через внутрішнє HTTP API
+- **Subscription API** (`app`) — публічне HTTP API (`/api/*`), внутрішнє API для сканера (`/internal/scanner/*`), опційний gRPC, доступ до PostgreSQL
+- **Release Scanner** (`release-scanner`) — фоновий воркер без доступу до БД; отримує цілі сканування та оновлює `lastSeenTag` через внутрішнє HTTP API або gRPC
+- **Notification Worker** (`notification`) — обробляє чергу BullMQ та надсилає email
+
+Детальна архітектурна документація (англійською): [`docs/architecture/overview.md`](../architecture/overview.md), [`layers.md`](../architecture/layers.md).
 
 Комунікація між сервісами — синхронний HTTP з автентифікацією `INTERNAL_API_KEY`.
 
