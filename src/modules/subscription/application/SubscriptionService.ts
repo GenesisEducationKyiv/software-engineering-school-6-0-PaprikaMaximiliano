@@ -1,4 +1,4 @@
-import type { SubscribeInput, SubscriptionResponse } from "../api/types";
+import type { SubscribeInput, SubscriptionResponse } from "../contracts/subscriptionContracts";
 import { ResourceNotFoundError } from "../../../platform/errors";
 import { RepoValidator } from "../domain/RepoValidator";
 import { SubscriptionMapper } from "../domain/SubscriptionMapper";

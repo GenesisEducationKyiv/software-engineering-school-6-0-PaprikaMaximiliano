@@ -5,7 +5,7 @@ import { SubscriptionUrlBuilder } from "../../domain/UrlBuilder";
 import { SubscriptionConflictError, SagaExecutionError } from "../../../../platform/errors";
 import type { ISagaNotificationParticipant } from "../../../../platform/messaging/ports/ISagaNotificationParticipant";
 import { SagaOrchestrator } from "../../../../platform/saga/SagaOrchestrator";
-import type { SubscribeInput } from "../../api/types";
+import type { SubscribeInput } from "../../contracts/subscriptionContracts";
 import {
   createSubscribeConfirmationSteps,
   SUBSCRIBE_CONFIRMATION_SAGA_TYPE,

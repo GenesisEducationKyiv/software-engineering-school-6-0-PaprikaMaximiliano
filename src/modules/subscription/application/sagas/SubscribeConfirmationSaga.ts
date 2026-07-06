@@ -1,4 +1,4 @@
-import type { SubscribeInput } from "../../api/types";
+import type { SubscribeInput } from "../../contracts/subscriptionContracts";
 import type { ISubscriptionRepository } from "../../domain/ports/ISubscriptionRepository";
 import type { ISagaNotificationParticipant } from "../../../../platform/messaging/ports/ISagaNotificationParticipant";
 import type { SagaStep } from "../../../../platform/saga/types";
