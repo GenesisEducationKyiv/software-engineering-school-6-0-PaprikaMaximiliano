@@ -37,8 +37,11 @@ jobs:
       - name: Run Linter
         run: npm run lint
 
-      - name: Run Tests
-        run: npm test
+      - name: Check architecture dependencies
+        run: npm run dep:check
+
+      - name: Run unit tests
+        run: npm run test:unit
 
       - name: Build project
         run: npm run build
